@@ -3,14 +3,10 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
-
-	//"fmt"
 	"main/config"
 	"main/crypt"
 	"main/packet"
 	"main/services"
-	//"main/util"
 	"os"
 	"time"
 )

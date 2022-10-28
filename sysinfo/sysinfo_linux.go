@@ -1,4 +1,5 @@
 //go:build linux
+
 package sysinfo
 
 import (
@@ -102,3 +103,7 @@ func IsPidX64(pid uint32) (bool, error) {
 	return true, nil
 }
 
+// return 0
+func GetProcessSessionId(pid int32) uint32 {
+	return 0
+}
