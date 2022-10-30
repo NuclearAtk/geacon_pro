@@ -24,7 +24,9 @@
 
 上述测试环境均为实体机
 
-若想使用免杀powershell和免杀bypassUAC的话，请参考我的另外两个小工具（需要整理下。。暂时未上传），暂未进行集成。
+**为了规避360对fork&&run操作的监控，本项目目前采用注入自己的方式来执行cs原生的dll，但是测试发现cs原生powerpick在注入自己执行的时候有时候会拿不到回显，在fork&&run模式下正常。因此可用execute-assembly执行我这里另一个powershell免杀的[小工具](https://github.com/H4de5-7/powershell-bypass)，可绕过Defender、360等。**
+
+若想使用免杀bypassUAC的话，请execute-assembly执行[该项目](https://github.com/0xlane/BypassUAC/)的Csharp版本，尽管Csharp程序不免杀，但是execute-assembly之后可过Defender与360。该项目dll版本自己编译一下是可以免杀的，但是需要落地并且需要用rundll32执行，因此并不推荐。
 
 开发的过程中参考了鸡哥的数篇文章以及许许多多的项目，同时抓包对服务端返回的内容进行猜测，并对服务端java代码进行了部分的理解。
 
