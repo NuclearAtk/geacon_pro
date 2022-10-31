@@ -44,6 +44,8 @@
 **最简单的使用方法即为修改config.go中的公钥以及C2服务器地址，然后C2profile更换为下面的示例即可。**
 **C2profile示例已更新，C2profile适配的相关代码已更新，请师傅们重新下载一下，如果师傅们C2profile配置失败或者有更多需求的话请及时联系我**
 
+**师傅们注意一下shell和run的底层实现区别，思路里面写了，执行exe建议用run，后续会考虑是否将shell更换为createprocess的实现**
+
 ## 实现功能
 ### windows平台支持的功能：
 sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、shinject、dllinject、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、代理发包等功能
