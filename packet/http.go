@@ -64,7 +64,7 @@ func HttpPost(Url string, data []byte, cryptTypes []string, id []byte) ([]byte, 
 		}
 		if err != nil {
 			//fmt.Printf("!error: %v\n",err)
-			fmt.Printf("post connect error!")
+			fmt.Printf("post connect error!\n")
 			time.Sleep(config.WaitTime)
 			continue
 		} else {
@@ -96,7 +96,7 @@ func HttpGet(Url string, data string, cryptTypes []string) ([]byte, error) {
 		}
 		if err != nil {
 			//fmt.Printf("!error: %v\n", err)
-			fmt.Printf("get connect error!")
+			fmt.Printf("get connect error!\n")
 			time.Sleep(config.WaitTime)
 			continue
 			//panic(err)
