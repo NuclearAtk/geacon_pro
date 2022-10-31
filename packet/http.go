@@ -64,7 +64,7 @@ func HttpPost(Url string, data []byte, cryptTypes []string, id []byte) ([]byte, 
 		}
 		if err != nil {
 			//fmt.Printf("!error: %v\n",err)
-			fmt.Printf("connect error!")
+			fmt.Printf("post connect error!")
 			time.Sleep(config.WaitTime)
 			continue
 		} else {
@@ -95,7 +95,8 @@ func HttpGet(Url string, data string, cryptTypes []string) ([]byte, error) {
 			return nil, errors.New("This type is not supported now for metadata")
 		}
 		if err != nil {
-			fmt.Printf("!error: %v\n", err)
+			//fmt.Printf("!error: %v\n", err)
+			fmt.Printf("get connect error!")
 			time.Sleep(config.WaitTime)
 			continue
 			//panic(err)
