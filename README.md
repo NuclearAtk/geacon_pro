@@ -53,7 +53,7 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 ### linux和mac平台支持的功能：
 sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv
 
-文件管理部分支持图形化交互
+进程管理部分、文件管理部分支持图形化交互
 
 ### C2profile：
 10.31新增功能：
