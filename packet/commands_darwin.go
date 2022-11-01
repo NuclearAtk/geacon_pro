@@ -120,7 +120,7 @@ func ParseCommandShell(b []byte) (string, []byte, error) {
 	return app, cmd, nil
 }
 
-func Shell(path string, args []byte) ([]byte, error) {
+func Shell(path string, args []byte, Token uintptr) ([]byte, error) {
 	path = "/bin/bash"
 	args = bytes.ReplaceAll(args, []byte("/C"), []byte("-c"))
 	args = bytes.Trim(args, " ")

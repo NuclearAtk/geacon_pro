@@ -23,7 +23,7 @@ func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
 		result, err = packet.Run(shellBuf, Token)
 		return result, err
 	} else {
-		result, err = packet.Shell(shellPath, shellBuf)
+		result, err = packet.Shell(shellPath, shellBuf, Token)
 		return result, err
 	}
 }
