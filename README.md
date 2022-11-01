@@ -209,8 +209,7 @@ shell之前直接调用了golang的os/exec库，现在更改为底层CreateProce
 ### run && execute
 run和execute的区别在于，run可以返回执行的结果而execute无回显。底层的实现差别就在于run会通过管道回传执行的结果而execute不会。
 
-由于实现shell的os/exec库是新起进程执行的命令，无法以窃取来的令牌的身份执行命令，因此run和execute的实现在没有窃取令牌的时候调用了CreateProcess，窃取令牌后调用CreateProcessWithTokenW以令牌权限来执行命令。因此要注意，如果想以令牌的权限执行命令，那么需要用run或execute而不是shell。
-
+shell、run和execute的实现在没有窃取令牌的时候调用了CreateProcess，窃取令牌后调用CreateProcessWithTokenW以令牌权限来执行命令。
 ### powershell-import
 powershell-import部分的实现与cs的思路一样，先把输入的powershell module保存，之后在执行powershell命令的时候本地开一个端口并把module放上去，powershell直接请求该端口进行不落地的powershell module加载，不落地加载powershell module可以对部分杀软进行绕过。
 
