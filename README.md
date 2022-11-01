@@ -44,7 +44,7 @@
 **最简单的使用方法即为修改config.go中的公钥以及C2服务器地址，然后C2profile更换为下面的示例即可。**
 **C2profile示例已更新，C2profile适配的相关代码已更新，请师傅们重新下载一下，如果师傅们C2profile配置失败或者有更多需求的话请及时联系我**
 
-**师傅们注意一下shell和run的底层实现区别，思路里面写了，执行exe建议用run，后续会考虑是否将shell更换为createprocess的实现**
+**已将shell更换为createprocess的实现**
 
 ## 实现功能
 ### windows平台支持的功能：
@@ -204,8 +204,7 @@ post-ex {
 
 ## 部分功能的实现细节
 ### shell 
-shell直接调用了golang的os/exec库。
-windows下这个库的底层其实还是调用了CreateProcess，但是我没找到go是否提供了封装好了的CreateProcessWithTokenW方法。
+shell之前直接调用了golang的os/exec库，现在更改为底层CreateProcess的实现，与run的区别仅在于shell调用了cmd。
 
 ### run && execute
 run和execute的区别在于，run可以返回执行的结果而execute无回显。底层的实现差别就在于run会通过管道回传执行的结果而execute不会。
