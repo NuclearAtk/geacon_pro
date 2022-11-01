@@ -9,11 +9,6 @@ import (
 
 type Charset string
 
-const (
-	UTF8    = Charset("UTF-8")
-	GB18030 = Charset("GB18030")
-)
-
 func BytesCombine(pBytes ...[]byte) []byte {
 	return bytes.Join(pBytes, []byte(""))
 }
@@ -39,13 +34,10 @@ func ParseAnArg(buf *bytes.Buffer) ([]byte, error) {
 
 }
 
-func ConvertChinese(byte []byte) [] byte {
-	result, _ := simplifiedchinese.GB18030.NewDecoder().Bytes(byte)
+func ConvertChinese(byte []byte) []byte {
+	result, _ := simplifiedchinese.GBK.NewEncoder().Bytes(byte)
 	return result
 }
-
-
-
 
 func DebugError() {
 

