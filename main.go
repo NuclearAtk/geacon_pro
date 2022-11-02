@@ -149,6 +149,8 @@ func main() {
 							default:
 								err = errors.New("This type is not supported now.")
 							}
+							// convert charset here
+							result, err = packet.CodepageToUTF8(result)
 							if err != nil {
 								packet.ErrorProcess(err)
 							} else {
