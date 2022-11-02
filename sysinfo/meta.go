@@ -2,6 +2,7 @@ package sysinfo
 
 import (
 	"encoding/binary"
+	"main/config"
 	"main/crypt"
 	"net"
 	"os"
@@ -22,15 +23,20 @@ func GetProcessName() string {
 	processName := os.Args[0]
 	// C:\Users\admin\Desktop\cmd.exe
 	// ./cmd
+	var result string
 	slashPos := strings.LastIndex(processName, "\\")
 	if slashPos > 0 {
-		return processName[slashPos+1:]
+		result = processName[slashPos+1:]
 	}
 	backslashPos := strings.LastIndex(processName, "/")
 	if backslashPos > 0 {
-		return processName[backslashPos+1:]
+		result = processName[backslashPos+1:]
 	}
-	return "unknown"
+	// stupid length limit
+	if len(result) > 10 {
+		result = result[len(result)-9:]
+	}
+	return result
 }
 
 func GetPID() int {
@@ -59,13 +65,13 @@ func GetMetaDataFlag() int {
 func GetComputerName() string {
 	sHostName, _ := os.Hostname()
 	// message too long for RSA public key size
-	if len(sHostName) > 10 {
-		sHostName = sHostName[1 : 10-1]
-	}
 	if runtime.GOOS == "linux" {
 		sHostName = sHostName + " (Linux)"
 	} else if runtime.GOOS == "darwin" {
 		sHostName = sHostName + " (Darwin)"
+	}
+	if len(sHostName) > config.ComputerNameLength {
+		return sHostName[:config.ComputerNameLength]
 	}
 	return sHostName
 }

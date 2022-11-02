@@ -1,4 +1,5 @@
 //go:build windows
+
 package sysinfo
 
 import (
@@ -6,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/sys/windows"
+	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -89,13 +91,12 @@ func IsOSX64() (bool, error) {
 		return false, errors.New("not found GetNativeSystemInfo")
 	}
 	fnGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&systemInfo)))
-	if (systemInfo.ProcessorArchitecture == ProcessorArchitectureAMD64 ||
-		systemInfo.ProcessorArchitecture != ProcessorArchitectureIA64) {
+	if systemInfo.ProcessorArchitecture == ProcessorArchitectureAMD64 ||
+		systemInfo.ProcessorArchitecture != ProcessorArchitectureIA64 {
 		//x64
 		//fmt.Println("amd64")
 		return true, nil
-	} else
-	{
+	} else {
 		//x86
 		//fmt.Println("386")
 		return false, nil
@@ -120,7 +121,6 @@ func IsProcessX64() (bool, error) {
 	if r1 == 0 {
 		return false, errors.New("fnIsWow64Process failed")
 	}
-
 
 	if is64 == 1 {
 		//fmt.Println("procss is x86 (value = 0)")
@@ -163,6 +163,9 @@ func GetUsername() (string, error) {
 		return "", err
 	}
 	s := syscall.UTF16ToString(username)
+	// seems username be like computerName\username, so we split it here
+	arr := strings.Split(s, "\\")
+	s = arr[len(arr)-1]
 	return s, nil
 }
 

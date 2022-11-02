@@ -32,7 +32,7 @@ var (
 	Proxy   = "http://192.168.52.10:8080"
 
 	//Sleep_mask = true
-
+	ComputerNameLength = 0
 )
 
 var (
