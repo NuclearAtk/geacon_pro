@@ -150,12 +150,10 @@ func main() {
 								err = errors.New("This type is not supported now.")
 							}
 							// convert charset here
-							result, err = packet.CodepageToUTF8(result)
 							if err != nil {
 								packet.ErrorProcess(err)
 							} else {
-								finalPaket := packet.MakePacket(callbackType, result)
-								packet.PushResult(finalPaket)
+								packet.DataProcess(callbackType, result)
 							}
 						}
 					}

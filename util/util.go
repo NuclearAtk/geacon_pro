@@ -3,7 +3,6 @@ package util
 import (
 	"bytes"
 	"encoding/binary"
-	"golang.org/x/text/encoding/simplifiedchinese"
 	"strings"
 )
 
@@ -34,10 +33,10 @@ func ParseAnArg(buf *bytes.Buffer) ([]byte, error) {
 
 }
 
-func ConvertChinese(byte []byte) []byte {
+/*func ConvertChinese(byte []byte) []byte {
 	result, _ := simplifiedchinese.GBK.NewEncoder().Bytes(byte)
 	return result
-}
+}*/
 
 func DebugError() {
 
