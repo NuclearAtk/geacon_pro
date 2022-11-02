@@ -302,11 +302,9 @@ func HandlerJob(b []byte) ([]byte, error) {
 		result, err := ReadNamedPipeAll(pipeName)
 
 		if result != "" {
-			finalPacket := MakePacket(callbackType, []byte(result[4:]))
-			PushResult(finalPacket)
+			DataProcess(callbackType, []byte(result[4:]))
 		} else {
-			finalPacket := MakePacket(callbackType, []byte("result error."))
-			PushResult(finalPacket)
+			ErrorProcess(errors.New("result error"))
 		}
 
 		if err != nil {
@@ -316,8 +314,7 @@ func HandlerJob(b []byte) ([]byte, error) {
 	}
 
 	jobWithCallback(pipeName, callbackType, sleepTime, func(result []byte) {
-		finalPacket := MakePacket(callbackType, result)
-		PushResult(finalPacket)
+		DataProcess(callbackType, result)
 	})
 
 	return []byte("Hold on"), nil
@@ -341,7 +338,7 @@ func ReadNamedPipe(pipeName []byte, callbackType int, sleepTime uint16) (string,
 			break
 		}
 		if n > 0 {
-			PushResult(MakePacket(callbackType, buf[:n]))
+			DataProcess(callbackType, buf[:n])
 			time.Sleep(time.Millisecond * time.Duration(sleepTime))
 		}
 		result += string(buf[:n])
@@ -375,7 +372,7 @@ func jobWithCallback(pipeName []byte, callbackType int, sleepTime uint16, callba
 	go func() {
 		result, err := ReadNamedPipe(pipeName, callbackType, sleepTime)
 		if err != nil {
-			PushResult(MakePacket(0, []byte(err.Error())))
+			ErrorProcess(err)
 			return
 		}
 		callback([]byte(result))

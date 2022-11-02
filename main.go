@@ -149,11 +149,11 @@ func main() {
 							default:
 								err = errors.New("This type is not supported now.")
 							}
+							// convert charset here
 							if err != nil {
 								packet.ErrorProcess(err)
 							} else {
-								finalPaket := packet.MakePacket(callbackType, result)
-								packet.PushResult(finalPaket)
+								packet.DataProcess(callbackType, result)
 							}
 						}
 					}

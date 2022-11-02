@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+var ANSICodePage uint32
+
 func GeaconID() int {
 	randomInt := crypt.RandomInt(100000, 999998)
 	if randomInt%2 == 0 {

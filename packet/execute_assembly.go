@@ -158,8 +158,7 @@ func LoadBin(data []byte, assemblyArgs []string, runtime string, debug bool) (st
 
 func ExecuteAssembly(shellcode []byte, params []string) ([]byte, error) {
 	ExecuteAssemblyWithCallback(shellcode, params, func(result []byte) {
-		finalPacket := MakePacket(0, result)
-		PushResult(finalPacket)
+		DataProcess(0, result)
 	})
 
 	return []byte("Hold on"), nil

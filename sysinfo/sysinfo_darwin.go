@@ -44,16 +44,16 @@ func IsProcessX64() (bool, error) {
 }
 
 func GetCodePageANSI() ([]byte, error) {
-	//hardcode for test
+	// darwin use utf8(I guess)
 	b := make([]byte, 2)
-	binary.LittleEndian.PutUint16(b, 936)
+	binary.LittleEndian.PutUint16(b, 65001)
 	return b, nil
 }
 
 func GetCodePageOEM() ([]byte, error) {
-	//hardcode for test
+	//use utf8
 	b := make([]byte, 2)
-	binary.LittleEndian.PutUint16(b, 936)
+	binary.LittleEndian.PutUint16(b, 65001)
 	return b, nil
 }
 

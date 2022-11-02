@@ -175,10 +175,12 @@ func GetCodePageANSI() ([]byte, error) {
 		return nil, errors.New("not found GetACP")
 	}
 	acp, _, _ := fnGetACP.Call()
+	ANSICodePage = uint32(acp)
 	//fmt.Printf("%v\n",acp)
-	acpbytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(acpbytes, uint32(acp))
-	return acpbytes[:2], nil
+	acpbytes := make([]byte, 2)
+	// hard code to utf8
+	binary.LittleEndian.PutUint16(acpbytes, 65001)
+	return acpbytes, nil
 
 }
 
@@ -187,9 +189,9 @@ func GetCodePageOEM() ([]byte, error) {
 	if fnGetOEMCP.Find() != nil {
 		return nil, errors.New("not found GetOEMCP")
 	}
-	acp, _, _ := fnGetOEMCP.Call()
+	_, _, _ = fnGetOEMCP.Call()
 	//fmt.Printf("%v\n",acp)
-	acpbytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(acpbytes, uint32(acp))
-	return acpbytes[:2], nil
+	acpbytes := make([]byte, 2)
+	binary.LittleEndian.PutUint16(acpbytes, 65001)
+	return acpbytes, nil
 }
