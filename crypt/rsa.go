@@ -33,5 +33,5 @@ func RsaDecrypt(origData []byte) ([]byte, error) {
 		return nil, err
 	}
 	priv := privInterface.(*rsa.PrivateKey)
-	return rsa.DecryptPKCS1v15 (rand.Reader, priv, origData)
+	return rsa.DecryptPKCS1v15(rand.Reader, priv, origData)
 }
