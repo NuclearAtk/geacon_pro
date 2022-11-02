@@ -3,7 +3,7 @@
 ## 项目介绍
 本项目基于[geacon](https://github.com/darkr4y/geacon)项目对cobaltstrike的beacon进行了重构，并适配了大部分Beacon的功能。
 
-**该项目会持续跟进免杀的技术，保持项目的免杀性，并将免杀的技术与工具集成进来，希望未来可以做成不仅限cs功能的后渗透免杀工具。如果师傅们有相关的需求或者想法，欢迎一起来讨论。**
+**该项目会持续跟进免杀的技术，保持项目的免杀性，并将免杀的技术与工具集成进来，希望未来可以做成不仅限cs功能的跨平台后渗透免杀工具。如果师傅们有相关的需求或者想法，欢迎一起来讨论。**
 
 **该项目仅用于对CobaltStrike协议的学习测试。请勿使用于任何非法用途，由此产生的后果自行承担。**
 
@@ -54,6 +54,7 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 
 ### linux和mac平台支持的功能：
 sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv
+后续会添加linux与mac平台下后渗透功能
 
 进程管理部分、文件管理部分支持图形化交互
 
