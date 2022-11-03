@@ -1,7 +1,7 @@
 # geacon_pro
 
 
-## [中文说明在这里](https://github.com/H4de5-7/geacon_pro/README_zh.md)
+## [中文说明在这里](https://github.com/H4de5-7/geacon_pro/blob/master/README_zh.md)
 
 
 ## Introduction
