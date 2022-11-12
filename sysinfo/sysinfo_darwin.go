@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"runtime"
 )
 
 func GetOSVersion() (string, error) {
@@ -34,13 +33,6 @@ func IsOSX64() (bool, error) {
 		return true, nil
 	}
 	return false, nil
-}
-
-func IsProcessX64() (bool, error) {
-	if runtime.GOARCH == "amd64" {
-		return false, nil
-	}
-	return true, nil
 }
 
 func GetCodePageANSI() ([]byte, error) {

