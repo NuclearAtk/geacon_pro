@@ -22,7 +22,10 @@ func GeaconID() int {
 }
 
 func GetProcessName() string {
-	processName := os.Args[0]
+	processName, err := os.Executable()
+	if err != nil {
+		return "unknown"
+	}
 	// C:\Users\admin\Desktop\cmd.exe
 	// ./cmd
 	var result string
