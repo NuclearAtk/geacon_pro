@@ -103,41 +103,12 @@ func IsOSX64() (bool, error) {
 	}
 }
 
-func IsProcessX64() (bool, error) {
-	fnIsWow64Process := Kernel32.NewProc("IsWow64Process")
-	//fnIsWow64Process := kernel32.FindProc("IsWow64Process")
-	if fnIsWow64Process.Find() != nil {
-		return false, errors.New("not found GetNativeSystemInfo")
-	}
-
-	is64 := 0
-
-	hProcess, err := syscall.GetCurrentProcess()
-	if err != nil {
-		return false, err
-	}
-
-	r1, _, err := fnIsWow64Process.Call(uintptr(hProcess), uintptr(unsafe.Pointer(&is64)))
-	if r1 == 0 {
-		return false, errors.New("fnIsWow64Process failed")
-	}
-
-	if is64 == 1 {
-		//fmt.Println("procss is x86 (value = 0)")
-		return false, nil
-	} else {
-		//fmt.Println("procss is x64 (value = 1)")
-		return true, nil
-	}
-	//return false
-}
-
 func IsPidX64(pid uint32) (bool, error) {
 	is64 := false
 
 	hProcess, err := windows.OpenProcess(uint32(0x1000), false, pid)
 	if err != nil {
-		return IsProcessX64()
+		return IsProcessX64(), nil
 	}
 
 	_ = windows.IsWow64Process(hProcess, &is64)

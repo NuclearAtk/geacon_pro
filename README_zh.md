@@ -78,7 +78,7 @@
 
 3、go build -ldflags "-H windowsgui -w" 缩小体积并去除黑框
 
--s和-w同时使用可能会被360查杀。
+4、go build -ldflags "-H windowsgui -s -w" 缩小体积并去除黑框
 
 linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后台运行。
 
@@ -88,7 +88,9 @@ linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后�
 
 **可以支持域前置，因为只是模拟了cs的发包的协议，把C2地址更改为域前置回连的域名和端口，然后把config.go里面req.Header的host更改为域前置域名，profile不用变，谢谢帮忙测试了的师傅。**
 
-**geacon_pro目前是免杀的。不过如果使用的人较多，会被杀软盯上，我们会尽量保持免杀性。360偶尔会出现落地乱查杀的情况（不限于geacon_pro），通常为QVM202.0.4B4A或类似情况。。这时候传一个helloword上去都会被落地查杀，有可能是对编译路径进行标记，可以换一个中文路径去编译，或者可以等一段时间就好了，或者重启一下机子，也可尝试用[garble](https://github.com/burrowers/garble)这个项目混淆一下源码。**
+**geacon_pro目前是免杀的。不过如果使用的人较多，会被杀软盯上，我们会尽量保持免杀性，师傅们可尝试用[garble](https://github.com/burrowers/garble)这个项目混淆一下源码。**
+
+**出于免杀性考量，暂时删除掉powershell-import代码，师傅们若想使用可以将commands_windows.go中的PowershellPort注释恢复。**
 
 **部分cs二开版本由于修改了48879该特征，可能会认证失败，如果失败的话可以尝试将meta.go中的0xBEEF更改为jar包二开后的值。可参考鸡哥的这篇[文章](https://bbs.pediy.com/thread-267208.htm)来找jar包中二开后的值。**
 
@@ -259,7 +261,7 @@ post-ex {
 主方法对各个命令进行了解析与执行，以及对结果和错误进行了返回
 
 ## 部分功能的实现细节
-### shell 
+### shell
 shell之前直接调用了golang的os/exec库，现在更改为底层CreateProcess的实现，与run的区别仅在于shell调用了cmd。
 
 ### run && execute
@@ -299,7 +301,7 @@ dll通过管道将结果异步地回传给服务端。目前的dll反射注入�
 考虑到渗透中常常存在着内网主机上线的情况，即边缘主机出网，内网主机不出网的情况。目前实现的木马暂不支持代理转发的功能，但是可以通过设置config.go中的proxy参数，通过边缘主机的代理进行木马的上线。即如果在边缘主机的8080端口开了个http代理，那么在config.go中设置ProxyOn为true，Proxy为`http://ip:8080`即可令内网的木马上线我们的C2服务器。
 
 ### 堆内存加密
-堆内存加密的方法实现参考了[该文章](https://cloud.tencent.com/developer/article/1949555)。在sleep之前先将除主线程之外的线程挂起，之后遍历堆对堆内存进行加密。sleep结束后解密并将线程恢复。不过该功能较为不稳定，有时在进行堆遍历的时候会突然卡住或者直接退出，并且考虑到后台可能会有keylogger或portscan这种的持久任务，将线程全部挂起有些不合适，如果有师傅有好的想法欢迎来讨论。同时我不太理解为什么go的time.Sleep函数在其他线程都挂起之后调用会一直沉睡，而调用windows.SleepEx就不会有问题，还望师傅们解答。
+堆内存加密的方法实现参考了[该文章](https://cloud.tencent.com/developer/article/1949555) 。在sleep之前先将除主线程之外的线程挂起，之后遍历堆对堆内存进行加密。sleep结束后解密并将线程恢复。不过该功能较为不稳定，有时在进行堆遍历的时候会突然卡住或者直接退出，并且考虑到后台可能会有keylogger或portscan这种的持久任务，将线程全部挂起有些不合适，如果有师傅有好的想法欢迎来讨论。同时我不太理解为什么go的time.Sleep函数在其他线程都挂起之后调用会一直沉睡，而调用windows.SleepEx就不会有问题，还望师傅们解答。
 
 ### 字符集
 由于golang默认对UTF-8进行处理，因此我们对协议协商的字符集进行了统一，windows、linux、mac平台下均为UTF-8，然后将部分返回格式为GBK的数据转为UTF之后再回传，避免了中文乱码问题。

