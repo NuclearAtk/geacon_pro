@@ -76,7 +76,9 @@
 
 **最简单的使用方法即为修改config.go中的公钥（此公钥是cs的公钥，不是https的公钥，提取方法可参考[geacon](https://github.com/darkr4y/geacon)介绍）以及C2服务器地址（注意是listener地址，如果是http的listener的话需要将sslHTTP改为plainHTTP），然后C2profile更换为下面的示例即可**
 
-**理论上来说可以支持域前置，因为只是模拟了cs的发包的协议，不过我没有测试，把C2地址更改为域前置回连的域名和端口，然后把config.go里面的header更改为域名，如果有师傅测试了方便的话麻烦联系我或者提交issue**
+**可以支持域前置，因为只是模拟了cs的发包的协议，把C2地址更改为域前置回连的域名和端口，然后把config.go里面req.Header的host更改为域前置域名，profile不用变，谢谢帮忙测试了的师傅。**
+
+**360有时候会出现乱查杀的情况，通常为QVM202.0.4B4A或类似情况。。这时候传一个helloword上去都会被查杀，可以等一段时间再测试或者重启一下机子。目前还是免杀的，师傅们要是不放心的话可以用garble这个项目来混淆一下源码。**
 
 **部分cs二开版本由于修改了48879该特征，可能会认证失败，如果失败的话可以尝试将meta.go中的0xBEEF更改为jar包二开后的值。可参考鸡哥的这篇[文章](https://bbs.pediy.com/thread-267208.htm)来找jar包中二开后的值。**
 
