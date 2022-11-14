@@ -70,7 +70,17 @@
 ## 使用方法
 本项目支持windows、linux、mac平台的使用。
 
-基础的使用方法可参考原项目，windows编译时添加-ldflags "-H windowsgui -s -w"减小程序体积并取消黑框。linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后台运行。
+基础的使用方法可参考原项目，windows有三种推荐的编译方式：
+
+1、go build
+
+2、go build -ldflags "-H windowsgui" 去除黑框
+
+3、go build -ldflags "-H windowsgui -w" 缩小体积并去除黑框
+
+-s和-w同时使用可能会被360查杀。
+
+linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后台运行。
 
 目前项目有部分控制台输出内容，若想删除可在代码中删除。
 
@@ -78,7 +88,7 @@
 
 **可以支持域前置，因为只是模拟了cs的发包的协议，把C2地址更改为域前置回连的域名和端口，然后把config.go里面req.Header的host更改为域前置域名，profile不用变，谢谢帮忙测试了的师傅。**
 
-**geacon_pro目前是免杀的。360偶尔会出现落地乱查杀的情况（不限于geacon_pro），通常为QVM202.0.4B4A或类似情况。。这时候传一个helloword上去都会被落地查杀，有可能是对编译路径进行标记，可以换一个中文路径去编译，或者可以等一段时间就好了，或者重启一下机子，师傅们不放心的话可以用[garble](https://github.com/burrowers/garble)这个项目混淆一下源码。**
+**geacon_pro目前是免杀的。不过如果使用的人较多，会被杀软盯上，我们会尽量保持免杀性。360偶尔会出现落地乱查杀的情况（不限于geacon_pro），通常为QVM202.0.4B4A或类似情况。。这时候传一个helloword上去都会被落地查杀，有可能是对编译路径进行标记，可以换一个中文路径去编译，或者可以等一段时间就好了，或者重启一下机子，也可尝试用[garble](https://github.com/burrowers/garble)这个项目混淆一下源码。**
 
 **部分cs二开版本由于修改了48879该特征，可能会认证失败，如果失败的话可以尝试将meta.go中的0xBEEF更改为jar包二开后的值。可参考鸡哥的这篇[文章](https://bbs.pediy.com/thread-267208.htm)来找jar包中二开后的值。**
 
