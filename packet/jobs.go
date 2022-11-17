@@ -18,6 +18,7 @@ import (
 var (
 	kernel32            = windows.NewLazySystemDLL("kernel32.dll")
 	ntdll               = windows.NewLazyDLL("ntdll.dll")
+	user32              = windows.NewLazyDLL("user32.dll")
 	VirtualAllocEx      = kernel32.NewProc("VirtualAllocEx")
 	VirtualProtectEx    = kernel32.NewProc("VirtualProtectEx")
 	WriteProcessMemory  = kernel32.NewProc("WriteProcessMemory")
@@ -44,6 +45,8 @@ var (
 	//GetProcessHeap , _ = syscall.GetProcAddress(kernel32syscall, "GetProcessHeap")
 	//HeapWalk , _ = syscall.GetProcAddress(kernel32syscall, "HeapWalk")
 
+	getConsoleWindow = kernel32.NewProc("GetConsoleWindow")
+	showWindow       = user32.NewProc("ShowWindow")
 )
 
 type CONTEXT struct {

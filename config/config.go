@@ -33,11 +33,15 @@ var (
 
 	//Sleep_mask = true
 	DeleteSelf         = false
+	HideConsole        = true
 	ComputerNameLength = 0
 )
 
 var (
 	WaitTime = 3000 * time.Millisecond
+
+	CommandReadTime = 5000 * time.Millisecond
+	//non-blocking lasting jobs
 
 	HttpHeaders = req.Header{
 		"Host":         "aliyun.com",

