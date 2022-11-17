@@ -19,7 +19,7 @@ func main() {
 		if errConsole != nil {
 			fmt.Println(errConsole)
 		} else {
-			fmt.Println(dataConsole)
+			fmt.Println(string(dataConsole))
 		}
 	}
 	ok := packet.FirstBlood()

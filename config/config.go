@@ -40,6 +40,9 @@ var (
 var (
 	WaitTime = 3000 * time.Millisecond
 
+	CommandReadTime = 5000 * time.Millisecond
+	//non-blocking lasting jobs
+
 	HttpHeaders = req.Header{
 		"Host":         "aliyun.com",
 		"User-Agent":   "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0; BOIE9;ENUS)",

