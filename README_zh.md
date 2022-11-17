@@ -80,11 +80,13 @@
 
 1、go build
 
-2、go build -ldflags "-H windowsgui" 去除黑框
+2、go build -ldflags "-H windowsgui" 去除黑框（已内置代码）
 
-3、go build -ldflags "-H windowsgui -w" 缩小体积并去除黑框
+3、go build -ldflags "-w" 缩小体积
 
-4、go build -ldflags "-H windowsgui -s -w" 缩小体积并去除黑框
+4、go build -ldflags "-s" 缩小体积
+
+5、go build -ldflags "-s -w" 缩小体积
 
 **360对部分编译参数有监控，可以尝试用go-strip等项目混淆编译参数，或者尝试用伪造签名等方法，~~后续我们会考虑增加隐藏黑框的代码，避免使用编译参数来隐藏黑框~~。**
 
