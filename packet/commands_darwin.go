@@ -292,6 +292,10 @@ func Execute(b []byte, Token uintptr) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
+func TimeStomp(from []byte, to []byte) ([]byte, error) {
+	return nil, errors.New("This function is not supported on this platform now.")
+}
+
 func GetUid() ([]byte, error) {
 	result, err := sysinfo.GetUsername()
 	if err != nil {

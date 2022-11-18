@@ -288,6 +288,10 @@ func File_Browse(b []byte) ([]byte, error) {
 
 }
 
+func TimeStomp(from []byte, to []byte) ([]byte, error) {
+	return nil, errors.New("This function is not supported on this platform now.")
+}
+
 func Execute(b []byte, Token uintptr) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
