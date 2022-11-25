@@ -14,8 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-	"unicode/utf16"
-
 	//"runtime"
 	"strconv"
 	"strings"
@@ -501,23 +499,21 @@ func PathExists(path string) bool {
 	return false
 }
 
-func Drives() ([]byte, error) {
-	n, err := windows.GetLogicalDriveStrings(0, nil)
+func Drives(b []byte) ([]byte, error) {
+	bitMask, err := windows.GetLogicalDrives()
 	if err != nil {
 		return nil, err
 	}
-	a := make([]uint16, n)
-	_, err = windows.GetLogicalDriveStrings(n, &a[0])
-	if err != nil {
-		return nil, err
+	var result []byte
+	i := 47
+	for bitMask > 0 {
+		if bitMask%2 == 1 {
+			result = append(result, byte(i))
+		}
+		bitMask >>= 1
+		i++
 	}
-	s := string(utf16.Decode(a))
-	arr := strings.Split(strings.TrimRight(s, "\x00"), "\x00")
-	s = ""
-	for _, aa := range arr {
-		s += aa + " "
-	}
-	return []byte(s), nil
+	return util.BytesCombine(b[0:4], result), nil
 }
 
 func Remove(b []byte) ([]byte, error) {

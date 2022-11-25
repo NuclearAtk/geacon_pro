@@ -198,8 +198,8 @@ func CmdMkdir(cmdBuf []byte) ([]byte, error) {
 	return packet.Mkdir(cmdBuf)
 }
 
-func CmdDrives() ([]byte, error) {
-	return packet.Drives()
+func CmdDrives(cmdBuf []byte) ([]byte, error) {
+	return packet.Drives(cmdBuf)
 }
 
 func CmdRm(cmdBuf []byte) ([]byte, error) {

