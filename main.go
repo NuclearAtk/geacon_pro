@@ -216,7 +216,12 @@ func main() {
 			} else {
 				time.Sleep(config.WaitTime)
 			}*/
-			time.Sleep(config.WaitTime)
+			waitTime, err := services.CallbackTime()
+			if err != nil {
+				fmt.Println(err)
+				packet.ErrorProcess(err)
+			}
+			time.Sleep(waitTime)
 
 		}
 	}
