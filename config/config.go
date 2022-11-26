@@ -40,6 +40,10 @@ var (
 var (
 	WaitTime = 3000 * time.Millisecond
 
+	Jitter = 7
+	// % Jitter
+	//0 <= Jitter <= 100
+
 	CommandReadTime = 5000 * time.Millisecond
 	//non-blocking lasting jobs
 

