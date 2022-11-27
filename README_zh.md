@@ -5,7 +5,7 @@
 
 **该项目会持续跟进免杀的技术，保持项目的免杀性，并将免杀的技术与工具集成进来，希望未来可以做成不仅限cs功能的跨平台后渗透免杀工具。如果师傅们有相关的需求或者想法，欢迎一起来讨论。师傅们的支持与讨论是我们前进的动力。**
 
-**！！！geacon_pro重构了beacon，师傅们如果不想局限于使用geacon_pro生成的exe，可以使用[该项目](https://github.com/WBGlIl/go-ReflectiveDLL)将geacon_pro转换成反射型dll/shellcode的形式后使用加载器来加载，进而达成千人千面的免杀形式。师傅们若觉得转换后的体积较大，可以用下载器的方式来远程stager加载。！！！**
+**！！！geacon_pro重构了beacon，师傅们如果不想局限于使用geacon_pro生成的exe，可以使用[该项目](https://github.com/WBGlIl/go-ReflectiveDLL)将geacon_pro转换成反射型dll/shellcode的形式后使用加载器来加载，进而达成千人千面的免杀形式。师傅们若觉得转换后的体积较大，可以用下载器的方式来远程stager加载。详情见使用方法。！！！**
 
 **该项目仅用于对CobaltStrike协议的学习测试。请勿使用于任何非法用途，由此产生的后果自行承担。**
 
