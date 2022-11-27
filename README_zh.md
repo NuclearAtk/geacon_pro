@@ -78,40 +78,9 @@
 ## 使用方法
 本项目支持windows、linux、mac平台的使用。
 
-### 1、转成反射型dll/shellcode的形式以加载器方式来灵活加载
+有以下两种使用的方法，师傅们可以根据自己的喜好来灵活地使用：
 
-geacon_pro重构了beacon，师傅们如果不想局限于使用geacon_pro生成的exe，可以使用[该项目](https://github.com/WBGlIl/go-ReflectiveDLL)将geacon_pro转换成反射型dll/shellcode的形式后使用加载器来加载，进而达成千人千面的免杀形式。师傅们若觉得转换后的体积较大，可以用下载器的方式来远程stager加载。！！！将geacon_pro目录下文件移到该项目目录下之后，将main.go原本的main函数更名为OnPorcessAttach并标注导出函数export，之后添加import "C"并新增main()函数即可，最后用x64.bat编译（可以自定义编译的参数）并生成反射型dll。main.go示例如下：
-
-```
-package main
-
-import "C"
-import (
-	"bytes"
-	"errors"
-	"fmt"
-	"main/config"
-	"main/crypt"
-	"main/packet"
-	"main/services"
-	"os"
-	"strings"
-	"time"
-)
-
-func main() {
-    //fmt.Println("123")
-}
-//export OnProcessAttach
-func OnProcessAttach() {
-	......//原本main.go里面的内容
-	......
-	......
-}
-
-```
-
-### 2、直接编译成exe执行
+### 第一种使用方法：直接编译成exe执行
 
 基础的使用方法可参考原项目，windows有四种推荐的编译方式：
 
@@ -141,8 +110,40 @@ linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后�
 
 **出于免杀性考量，暂时删除掉powershell-import代码，师傅们若想使用可以将commands_windows.go中的PowershellPort注释恢复。**
 
-**部分cs二开版本由于修改了48879该特征，可能会认证失败，如果失败的话可以尝试将meta.go中的0xBEEF更改为jar包二开后的值。可参考鸡哥的这篇[文章](https://bbs.pediy.com/thread-267208.htm)来找jar包中二开后的值。**
+部分cs二开版本由于修改了48879该特征，可能会认证失败，如果失败的话可以尝试将meta.go中的0xBEEF更改为jar包二开后的值。可参考鸡哥的这篇[文章](https://bbs.pediy.com/thread-267208.htm)来找jar包中二开后的值。
 
+### 第二种使用方法：转成反射型dll/shellcode的形式以加载器方式来灵活加载
+
+geacon_pro重构了beacon，师傅们如果不想局限于使用geacon_pro生成的exe，可以使用[该项目](https://github.com/WBGlIl/go-ReflectiveDLL)将geacon_pro转换成反射型dll/shellcode的形式后使用加载器来加载，进而达成千人千面的免杀形式。师傅们若觉得转换后的体积较大，可以用下载器的方式来远程stager加载。将geacon_pro目录下文件移到该项目目录下之后，将main.go原本的main函数更名为OnPorcessAttach并标注导出函数export，之后添加import "C"并新增main()函数即可，最后用x64.bat编译（可以自定义编译的参数）并生成反射型dll。main.go示例如下：
+
+```
+package main
+
+import "C"
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"main/config"
+	"main/crypt"
+	"main/packet"
+	"main/services"
+	"os"
+	"strings"
+	"time"
+)
+
+func main() {
+    //fmt.Println("123")
+}
+//export OnProcessAttach
+func OnProcessAttach() {
+	......//原本main.go里面的内容
+	......
+	......
+}
+
+```
 
 ## 实现功能
 ### windows平台支持的功能：
