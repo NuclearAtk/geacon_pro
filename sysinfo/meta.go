@@ -94,17 +94,25 @@ func GetLocalIPInt() uint32 {
 	if err != nil {
 		return 0
 	}
+	var ip16 uint32
+	var ip uint32
 	for _, address := range addrs {
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
+			ipString := ipnet.IP.String()
+			if ipnet.IP.To4() != nil && !strings.HasPrefix(ipString, "169.254.") {
 				if len(ipnet.IP) == 16 {
-					return binary.LittleEndian.Uint32(ipnet.IP[12:16])
+					ip16 = binary.LittleEndian.Uint32(ipnet.IP[12:16])
 				}
-				return binary.LittleEndian.Uint32(ipnet.IP)
+				ip = binary.LittleEndian.Uint32(ipnet.IP)
 			}
 		}
 	}
-	return 0
+
+	if ip16 != 0 {
+		return ip16
+	}
+
+	return ip
 }
 
 func GetMagicHead() []byte {
