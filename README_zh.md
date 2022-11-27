@@ -5,7 +5,7 @@
 
 **该项目会持续跟进免杀的技术，保持项目的免杀性，并将免杀的技术与工具集成进来，希望未来可以做成不仅限cs功能的跨平台后渗透免杀工具。如果师傅们有相关的需求或者想法，欢迎一起来讨论。师傅们的支持与讨论是我们前进的动力。**
 
-**后续可能会考虑hook服务端jar包，类似冰蝎4.0让用户可以自定义流量的加密方式。**
+**！！！geacon_pro重构了beacon，师傅们如果不想局限于使用geacon_pro生成的exe，可以使用[该项目](https://github.com/WBGlIl/go-ReflectiveDLL)将geacon_pro转换成反射型dll/shellcode的形式后使用加载器来加载，进而达成千人千面的免杀形式。师傅们若觉得转换后的体积较大，可以用下载器的方式来远程stager加载。！！！**
 
 **该项目仅用于对CobaltStrike协议的学习测试。请勿使用于任何非法用途，由此产生的后果自行承担。**
 
@@ -76,6 +76,37 @@
 3、适配了http-post的output的parameter、header、print形式，暂时不支持uri-append形式。
 
 ## 使用方法
+**！！！geacon_pro重构了beacon，师傅们如果不想局限于使用geacon_pro生成的exe，可以使用[该项目](https://github.com/WBGlIl/go-ReflectiveDLL)将geacon_pro转换成反射型dll/shellcode的形式后使用加载器来加载，进而达成千人千面的免杀形式。师傅们若觉得转换后的体积较大，可以用下载器的方式来远程stager加载。！！！将geacon_pro目录下文件移到该项目目录下之后，将main.go原本的main函数更名为OnPorcessAttach并标注导出函数export，之后添加import "C"并新增main()函数即可，最后用x64.bat编译（可以自定义编译的参数）并生成反射型dll。main.go示例如下
+
+```
+package main
+
+import "C"
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"main/config"
+	"main/crypt"
+	"main/packet"
+	"main/services"
+	"os"
+	"strings"
+	"time"
+)
+
+func main() {
+    //fmt.Println("123")
+}
+//export OnProcessAttach
+func OnProcessAttach() {
+	......
+	......
+	......
+}
+
+```
+
 本项目支持windows、linux、mac平台的使用。
 
 基础的使用方法可参考原项目，windows有四种推荐的编译方式：
