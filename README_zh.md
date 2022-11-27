@@ -43,9 +43,9 @@
 **如果有师傅对堆内存加密有好的解决思路欢迎来讨论，我的实现思路在实现细节里面**
 
 ## 更新的情况
-11.26更新：
+11.27更新：
 
-实现了timeStomp、jitter，修正了drives与注入beacon.dll到其他进程中的BUG。
+实现了timeStomp、jitter，修正了drives图形化无法显示、注入beacon.dll到其他进程失败、获取内网地址有时会错误的BUG。
 
 11.17更新：
 
