@@ -43,6 +43,12 @@
 **如果有师傅对堆内存加密有好的解决思路欢迎来讨论，我的实现思路在实现细节里面**
 
 ## 更新的情况
+12.3更新：
+
+发布了正式1.0版本。
+
+新增了自定义设置使用说明。增加了config.go中Remark备注设置与ExecuteKey反沙箱设置，详情见自定义设置使用说明。
+
 11.27更新：
 
 实现了timeStomp、jitter，修正了drives图形化无法显示、注入beacon.dll到其他进程失败、获取内网地址有时会错误的BUG。
@@ -102,7 +108,7 @@ linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后�
 
 目前项目有部分控制台输出内容，若想删除可在代码中删除。
 
-**最简单的使用方法即为修改config.go中的公钥（此公钥是cs的公钥，不是https的公钥，提取方法可参考[geacon](https://github.com/darkr4y/geacon)介绍）以及C2服务器地址（注意是listener地址，如果是http的listener的话需要将sslHTTP改为plainHTTP），然后C2profile更换为下面的示例即可**
+**最简单的使用方法即为修改config.go中的公钥（此公钥是cs的公钥，不是https的公钥，提取方法可参考[geacon](https://github.com/darkr4y/geacon)介绍以及C2服务器地址（注意是listener地址，如果是http的listener的话需要将sslHTTP改为plainHTTP），然后C2profile更换为下面的示例即可**
 
 **可以支持域前置，因为只是模拟了cs的发包的协议，把C2地址更改为域前置回连的域名和端口，然后把config.go里面req.Header的host更改为域前置域名，profile不用变，谢谢帮忙测试了的师傅。**
 
@@ -138,7 +144,7 @@ func main() {
 }
 //export OnProcessAttach
 func OnProcessAttach() {
-	......//原本main.go里面的内容
+	......//原本main函数里面的内容
 	......
 	......
 }
@@ -147,7 +153,7 @@ func OnProcessAttach() {
 
 ## 实现功能
 ### windows平台支持的功能：
-sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
+sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
 
 由于要规避杀软对fork&&run的检测，暂时令反射型dll注入注入到自身进程中，暂时拿不到回显，请师傅们注意，如果师傅们对如何从CreateThread中拿回显有想法请联系我。
 
@@ -273,6 +279,15 @@ post-ex {
 
 ```
 
+### 自定义设置
+
+config.go中有一些自定义的设置：
+
+* Remark可以在上线的时候备注机子，方便区分不同应用场景。即如果Remark=“test”，上线机子的名称会被设置成为 ComputerName [test]。
+* ExecuteKey可以进行简单的反沙箱，若密钥值为password，设置后执行的时候需要geacon_pro.exe password才可执行成功，沙箱或蓝队成员由于不知道密钥，因此无法执行。
+* DeleteSelf设置是否自删除。
+* HideConsole设置是否内置隐藏黑框。
+
 ### 目前需要改进的地方：
 * ~~dllinject的BUG（正在修改中）~~
 * 堆内存加密目前不稳定，暂未正式使用
@@ -287,6 +302,7 @@ post-ex {
 * hook服务端jar包类似冰蝎4.0让用户自定义流量加密特征
 * 增加混淆的流量
 * 混淆内存中的反射型dll
+* 简化配置并加密配置文件
 
 ### 主体代码结构
 #### config
@@ -347,7 +363,7 @@ cs原生反射型dll注入的思路是先拉起来一个rundll32进程，之后�
 dll通过管道将结果异步地回传给服务端。目前的dll反射注入采用了注入自己的方法，后续会实现用户可通过配置文件进行注入方式的更改。
 
 ### 令牌
-令牌的部分目前实现了令牌的窃取、还原、制作。
+令牌的部分目前实现了令牌的窃取、还原、制作、权限的获取。
 
 ### 上线内网不出网主机
 考虑到渗透中常常存在着内网主机上线的情况，即边缘主机出网，内网主机不出网的情况。目前实现的木马暂不支持代理转发的功能，但是可以通过设置config.go中的proxy参数，通过边缘主机的代理进行木马的上线。即如果在边缘主机的8080端口开了个http代理，那么在config.go中设置ProxyOn为true，Proxy为`http://ip:8080`即可令内网的木马上线我们的C2服务器。
@@ -357,6 +373,9 @@ dll通过管道将结果异步地回传给服务端。目前的dll反射注入�
 
 ### 字符集
 由于golang默认对UTF-8进行处理，因此我们对协议协商的字符集进行了统一，windows、linux、mac平台下均为UTF-8，然后将部分返回格式为GBK的数据转为UTF之后再回传，避免了中文乱码问题。
+
+### 自删除
+CobaltStrike貌似没有做自删除的功能，我们添加了不同平台下的自删除功能。windows平台下由于进程未退出的时候是无法自己删除自己的，常用的方法有bat与远程线程注入。 远程线程注入的缺点前面也提到了容易被杀软监控，因此我们这里简化了一下bat自删除，用CreateProcess新起了一个自删除进程并设置为空闲时间执行，自删除进程在geacon_pro进程执行完之后删除它。Linux平台下可以直接删除正在执行的进程的文件。
 
 ## 404星链计划
 ![image](https://github.com/knownsec/404StarLink-Project/raw/master/logo.png)

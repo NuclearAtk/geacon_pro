@@ -13,6 +13,8 @@ geacon_pro has implemented most functions of Beacon.
 
 **We will continue to follow up the method of bypassing Anti-Virus and keep geacon_pro from being detected by Anti-Virus. We will also integrate the pen test tools which can bypass Anti-Virus. We hope that geacon_pro can be made into a cross-platform bypass Anti-Virus tool that is not limited to CobaltStrike native functions in the future. Discussions are welcome if you have relevant needs or ideas. your support and discussion is the driving force for us to move forward.**
 
+**!!! If you don’t want to use the exe compiled by geacon_pro, you can use this [project](https://github.com/WBGlIl/go-ReflectiveDLL) to convert geacon_pro into reflective dll/shellcode and then use the loader to load it. You can find the detail below. !!!**
+
 **This project is only for learning CobaltStrike protocol. Please do not use it for any illegal purpose, and the consequences arising therefrom shall be borne by yourself.**
 
 This project is developed by me and Z3ratu1. He has implemented a version of [geacon_plus](https://github.com/Z3ratu1/geacon_plus) that supports CobaltStrike version 4.0. geacon_pro supports version 4.1 and above. Functions of these two projects are almost same while encapsulation is slightly different.
@@ -31,6 +33,8 @@ In order to avoid 360's monitoring of the fork&&run operation, geacon_pro curren
 
 If you want to make bypassUAC avoid the detection of antivirus software, please using `execute-assembly` to execute the Csharp version of [this project](https://github.com/0xlane/BypassUAC/). Although the Csharp program will be detected by 360 when it is on the disk, it can bypass Defender and 360 by executing in memory using `execute-assembly`. The dll version of this project can bypass Anti-Virus, but it needs to be uploaded and executed with rundll32.
 
+If you want to find an Anti-Virus bundler, one my [project](https://github.com/H4de5-7/Bundler-bypass) may help you.
+
 **geacon_pro is still in development, the current version may have some incomplete functions. Please contact me if you have any needs.**
 
 **If you have a good solution for heap memory encryption, welcome to discuss, my implementation ideas are in the implementation details.**
@@ -38,23 +42,61 @@ If you want to make bypassUAC avoid the detection of antivirus software, please 
 ## How to use geacon_pro
 geacon_pro supports Windows, Linux and Mac.
 
+### Method one: Compile and execute
+
 For the basic usage, please refer to the original project geacon. Adding `-ldflags "-H windowsgui -s -w"` when compiling binary can reduce the program size and hide the cmd window. When compiling for linux and mac, adding `-ldflags "-s -w"` can reduce the size of the program, and then run it in the background.
 
 The simplest way to use geacon_pro is to modify the public key and C2 server address in config.go, and then replace the C2profile with the following example.
+
+The function of hiding the console has been realized, this function depends on the parameter "HideConsole" in config.go, but there is still a transient console currently.
+
+**geacon_pro supports domain fronting. you need change the C2 address to the domain name and corresponding port, and then change the host of req.Header in config.go to the domain, The C2profile does not need to be changed.**
 
 **At present, the project has some console output content, you can delete the related code to remove it.**
 
 If your CobaltStrike's magic number changed from 48879 to other number before, it may cause the authentication to fail. In that case you can try to change the 0xBEEF in meta.go to the value you have changed.
 
+### Method two: Convert to reflective dll/shellcode and use loader to load
+
+You can use this [project](https://github.com/WBGlIl/go-ReflectiveDLL) to convert geacon_pro into reflective dll/shellcode and then use the loader to load it. After moving the files in the geacon_pro's directory to this project's directory, rename the original main function of main.go to OnPorcessAttach and mark it as the export function. Then add ```import "C"``` and add the main() function. Finally, use x64.bat to compile (you can customize the compilation parameters) and generate reflective dll. One example of main.go can be found below:
+
+```
+package main
+
+import "C"
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"main/config"
+	"main/crypt"
+	"main/packet"
+	"main/services"
+	"os"
+	"strings"
+	"time"
+)
+
+func main() {
+    //fmt.Println("123")
+}
+//export OnProcessAttach
+func OnProcessAttach() {
+	......//original code in main function
+	......
+	......
+}
+```
+
 ## Functions
 
 ### Windows platform:
 
-sleep, shell, upload, download, exit, cd, pwd, file_browse, ps, kill, getuid, mkdir, rm, cp, mv, run, execute, drives, powershell-import, powershell, execute-assembly, Multiple thread injection methods (you can replace the source code yourself), shinject, dllinject, pipe, Various CobaltStrike native reflection dll injection (mimikatz, portscan, screenshot, keylogger, etc.), steal_token, rev2self, make_token, proxy, etc.
+sleep, shell, upload, download, exit, cd, pwd, file_browse, ps, kill, getuid, mkdir, rm, cp, mv, run, execute, drives, powershell-import, powershell, execute-assembly, Multiple thread injection methods (you can replace the source code yourself), inject, shinject, dllinject, pipe, Various CobaltStrike native reflection dll injection (mimikatz, portscan, screenshot, keylogger, etc.), steal_token, rev2self, make_token, getprivs, proxy, delete self, timestomp, etc. Supports reflectiveDll, execute-assembly, powershell, powerpick, upload and execute and other functions of cna custom plugins.
 
 ### Linux, Mac platform:
 
-sleep, shell, upload, download, exit, cd, pwd, file_browse, ps, kill, getuid, mkdir, rm, cp, mv, etc.
+sleep, shell, upload, download, exit, cd, pwd, file_browse, ps, kill, getuid, mkdir, rm, cp, mv, delete self, etc.
 
 The process management and the file management support graphical interaction.
 
@@ -62,119 +104,130 @@ The process management and the file management support graphical interaction.
 
 geacon_pro adapts the settings on the flow of C2profile and some settings on the host. The supported encoding algorithms are base64, base64url, mask, netbios, netbiosu. Details can be found in config.go. Here is an example C2profile.
 **IMPORTANT!!! After modifying the C2profile, do not forget to sync the changes in config.go:**
-```bigquery
+```
 # default sleep time is 60s
 set sleeptime "3000";
+set jitter "7";
 
 https-certificate {
-set C "KZ";
-set CN "foren.zik";
-set O "NN Fern Sub";
-set OU "NN Fern";
-set ST "KZ";
-set validity "365";
+    set C "KZ";
+    set CN "foren.zik";
+    set O "NN Fern Sub";
+    set OU "NN Fern";
+    set ST "KZ";
+    set validity "365";
 }
 
 # define indicators for an HTTP GET
 http-get {
 
-set uri "/www/handle/doc";
+	set uri "/www/handle/doc";
 
-client {
-#header "Host" "aliyun.com";
-# base64 encode session metadata and store it in the Cookie header.
-metadata {
+	client {
+		#header "Host" "aliyun.com";
+		# base64 encode session metadata and store it in the Cookie header.
+		metadata {
 			base64url;
-prepend "SESSIONID=";
-header "Cookie";
-}
+			prepend "SESSIONID=";
+			header "Cookie";
+		}
 	}
 
 	server {
 		# server should send output with no changes
-#header "Content-Type" "application/octet-stream";
-header "Server" "nginx/1.10.3 (Ubuntu)";
-header "Content-Type" "application/octet-stream";
-header "Connection" "keep-alive";
-header "Vary" "Accept";
-header "Pragma" "public";
-header "Expires" "0";
-header "Cache-Control" "must-revalidate, post-check=0, pre-check=0";
+		#header "Content-Type" "application/octet-stream";
+		header "Server" "nginx/1.10.3 (Ubuntu)";
+    		header "Content-Type" "application/octet-stream";
+        	header "Connection" "keep-alive";
+        	header "Vary" "Accept";
+        	header "Pragma" "public";
+        	header "Expires" "0";
+        	header "Cache-Control" "must-revalidate, post-check=0, pre-check=0";
 
-output {
+		output {
 			mask;
-netbios;
-prepend "data=";
-append "%%";
-print;
-}
+			netbios;
+			prepend "data=";
+			append "%%";
+			print;
+		}
 	}
 }
 
 # define indicators for an HTTP 
 http-post {
 	# Same as above, Beacon will randomly choose from this pool of URIs [if multiple URIs are provided]
-set uri "/IMXo";
-client {
-#header "Content-Type" "application/octet-stream";
+	set uri "/IMXo";
+	client {
+		#header "Content-Type" "application/octet-stream";				
 
-# transmit our session identifier as /submit.php?id=[identifier]
-
-id {				
+		# transmit our session identifier as /submit.php?id=[identifier]
+		
+		id {				
 			mask;
-netbiosu;
-prepend "user=";
-append "%%";
-header "User";
-}
+			netbiosu;
+			prepend "user=";
+			append "%%";
+			header "User";
+		}
 
 		# post our output with no real changes
 		output {
 			mask;
-base64url;
-prepend "data=";
-append "%%";
-print;
-}
+			base64url;
+			prepend "data=";
+			append "%%";		
+			print;
+		}
 	}
 
 	# The server's response to our HTTP POST
 	server {
 		header "Server" "nginx/1.10.3 (Ubuntu)";
-header "Content-Type" "application/octet-stream";
-header "Connection" "keep-alive";
-header "Vary" "Accept";
-header "Pragma" "public";
-header "Expires" "0";
-header "Cache-Control" "must-revalidate, post-check=0, pre-check=0";
+    		header "Content-Type" "application/octet-stream";
+        	header "Connection" "keep-alive";
+       	 	header "Vary" "Accept";
+        	header "Pragma" "public";
+        	header "Expires" "0";
+        	header "Cache-Control" "must-revalidate, post-check=0, pre-check=0";
 
 		# this will just print an empty string, meh...
-output {
+		output {
 			mask;
-netbios;
-prepend "data=";
-append "%%";
-print;
-}
+			netbios;
+			prepend "data=";
+			append "%%";
+			print;
+		}
 	}
 }
 
 post-ex {
-set spawnto_x86 "c:\\windows\\syswow64\\rundll32.exe";
-set spawnto_x64 "c:\\windows\\system32\\rundll32.exe";
-
-set thread_hint "ntdll.dll!RtlUserThreadStart+0x1000";
-set pipename "DserNamePipe##, PGMessagePipe##, MsFteWds##";
-set keylogger "SetWindowsHookEx";
+    set spawnto_x86 "c:\\windows\\syswow64\\rundll32.exe";
+    set spawnto_x64 "c:\\windows\\system32\\rundll32.exe";
+    
+    set thread_hint "ntdll.dll!RtlUserThreadStart+0x1000";
+    set pipename "DserNamePipe##, PGMessagePipe##, MsFteWds##";
+    set keylogger "SetWindowsHookEx";
 }
 
 ```
 
+### custom settings
+
+There are some custom settings in config.go:
+
+* Remark can be used to remark the machine, which is convenient for distinguishing different application scenarios. That is, if Remark="test", the name of the online machine will be set as ComputerName [test].
+* ExecuteKey can perform simple anti-sandbox. If the key value is “password”, ```geacon_pro.exe password``` is required to execute after setting. The sandbox or blue team members cannot execute because they do not know the key.
+* DeleteSelf sets whether to delete itself.
+* HideConsole sets whether to hide the console.
+
 ### Functions need to be improved
 
+* ~~The bug in dllinject function.~~
 * Heap memory encryption is currently unstable and has not been officially used.
 * ~~Modify the problem of Chinese display error under some functions.~~
-* Some functions do not support x86 system yet (I am too busy recently, and I will modify it as soon as possible).
+* ~~Some functions do not support x86 system yet (I am too busy recently, and I will modify it as soon as possible).~~
 
 ### To do in the future
 
@@ -182,6 +235,10 @@ set keylogger "SetWindowsHookEx";
 * Integrate the pen test tools which can bypass Anti-Virus.
 * Implement more functions under Linux and Mac.
 * Implement the function of code obfuscation.
+* Hook cobaltstrike.jar to custom flow characteristics (just like Behinder4.0)
+* Add flow obfuscation.
+* Obfuscate reflective dll in memory.
+* Simplify configuration and encrypt configuration file.
 
 ### Code structure
 
@@ -244,7 +301,7 @@ The implementation of execute-assembly is not the same as the native implementat
 
 ### process injection
 
-The implementation of shinject and dllinject all use APC injection.
+The implementation of shinject and dllinject all use remote injection.
 
 ### reflective dll injection
 
@@ -258,7 +315,7 @@ The dll sends the result back to the server asynchronously through the pipe. The
 
 ### token
 
-The part of the token currently implements steal_token, make_token and rev2self.
+The part of the token currently implements steal_token, make_token, rev2self and getprivs.
 
 ### the connection of server and hosts on the intranet
 
@@ -271,6 +328,10 @@ The implementation of heap memory encryption refers to [this project](https://gi
 ### charset
 
 Since Golang processes string as UTF-8 by default, we decide to hardcode the communication charset between geacon_pro and CS server to UTF-8. Since Linux and macOS also use UTF-8 as default charset, we only need to convert the output of windows. Now we only convert GBK charset to UTF8, avoiding the problem of Chinese garbled.
+
+### self deletion
+
+CobaltStrike seems not implement self deletion function. We have implemented a cross-platform self deletion function. Under the windows platform, it is not allowed to delete itself when the process has not exited. Commonly used methods include using bat and using remote thread injection. The disadvantage of remote thread injection is mentioned before that it is easy to be detected by Anti-Virus. Thus, we use CreateProcess to create a new self-deletion process and set it to execute in idle time, then the self-deletion process will be executed after the geacon_pro process finished. At that time, geacon_pro can be deleted by this self-deletion process. Under the Linux platform, the geacon_pro process can be deleted directly.
 
 ## 404Starlink
 ![image](https://github.com/knownsec/404StarLink-Project/raw/master/logo.png)

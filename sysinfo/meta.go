@@ -74,7 +74,7 @@ func GetComputerName() string {
 		sHostName = sHostName + " (Darwin)"
 	}
 	if config.Remark != "" {
-		sHostName = sHostName + ":" + config.Remark
+		sHostName = sHostName + " [" + config.Remark + "]"
 	}
 	if len(sHostName) > config.ComputerNameLength {
 		return sHostName[:config.ComputerNameLength]

@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// basic settings
 var (
 	RsaPublicKey = []byte(`-----BEGIN PUBLIC KEY-----
 	Here should be your publickey
@@ -22,12 +23,16 @@ var (
 	VerifySSLCert               = true
 	TimeOut       time.Duration = 10 //seconds
 
-	IV        = []byte("abcdefghijklmnop")
-	GlobalKey []byte
-	AesKey    []byte
-	HmacKey   []byte
-	Counter   = 0
+	IV                 = []byte("abcdefghijklmnop")
+	GlobalKey          []byte
+	AesKey             []byte
+	HmacKey            []byte
+	Counter            = 0
+	ComputerNameLength = 0
+)
 
+// personalized settings
+var (
 	ProxyOn = false
 	Proxy   = "http://192.168.52.10:8080"
 
@@ -36,9 +41,11 @@ var (
 	HideConsole = true
 	Remark      = ""
 	//Remark = "test"
-	ComputerNameLength = 0
+	ExecuteKey = ""
+	//ExecuteKey = "password"
 )
 
+// C2profile settings
 var (
 	WaitTime = 3000 * time.Millisecond
 
