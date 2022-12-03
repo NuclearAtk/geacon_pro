@@ -73,6 +73,9 @@ func GetComputerName() string {
 	} else if runtime.GOOS == "darwin" {
 		sHostName = sHostName + " (Darwin)"
 	}
+	if config.Remark != "" {
+		sHostName = sHostName + ":" + config.Remark
+	}
 	if len(sHostName) > config.ComputerNameLength {
 		return sHostName[:config.ComputerNameLength]
 	}

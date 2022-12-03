@@ -32,8 +32,10 @@ var (
 	Proxy   = "http://192.168.52.10:8080"
 
 	//Sleep_mask = true
-	DeleteSelf         = false
-	HideConsole        = true
+	DeleteSelf  = false
+	HideConsole = true
+	Remark      = ""
+	//Remark = "test"
 	ComputerNameLength = 0
 )
 
