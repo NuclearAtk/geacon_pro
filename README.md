@@ -42,6 +42,8 @@ If you want to find an Anti-Virus bundler, one my [project](https://github.com/H
 ## How to use geacon_pro
 geacon_pro supports Windows, Linux and Mac.
 
+There are two methods to use geacon_pro.
+
 ### Method one: Compile and execute
 
 For the basic usage, please refer to the original project geacon. Adding `-ldflags "-H windowsgui -s -w"` when compiling binary can reduce the program size and hide the cmd window. When compiling for linux and mac, adding `-ldflags "-s -w"` can reduce the size of the program, and then run it in the background.
