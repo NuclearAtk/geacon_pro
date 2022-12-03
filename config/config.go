@@ -36,6 +36,9 @@ var (
 	ProxyOn = false
 	Proxy   = "http://192.168.52.10:8080"
 
+	CommandReadTime = 5000 * time.Millisecond
+	//non-blocking lasting jobs
+
 	//Sleep_mask = true
 	DeleteSelf  = false
 	HideConsole = true
@@ -52,9 +55,6 @@ var (
 	Jitter = 7
 	// % Jitter
 	//0 <= Jitter <= 100
-
-	CommandReadTime = 5000 * time.Millisecond
-	//non-blocking lasting jobs
 
 	HttpHeaders = req.Header{
 		"Host":         "aliyun.com",

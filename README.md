@@ -221,6 +221,7 @@ There are some custom settings in config.go:
 * ExecuteKey can perform simple anti-sandbox. If the key value is “password”, ```geacon_pro.exe password``` is required to execute after setting. The sandbox or blue team members cannot execute because they do not know the key.
 * DeleteSelf sets whether to delete itself.
 * HideConsole sets whether to hide the console.
+* CommandReadTime sets the interval for asynchronous real-time echo when executes long duration commands.
 
 ### Functions need to be improved
 

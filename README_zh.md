@@ -287,6 +287,7 @@ config.go中有一些自定义的设置：
 * ExecuteKey可以进行简单的反沙箱，若密钥值为password，设置后执行的时候需要geacon_pro.exe password才可执行成功，沙箱或蓝队成员由于不知道密钥，因此无法执行。
 * DeleteSelf设置是否自删除。
 * HideConsole设置是否内置隐藏黑框。
+* CommandReadTime设置异步实时回显长命令的间隔时间。
 
 ### 目前需要改进的地方：
 * ~~dllinject的BUG（正在修改中）~~
