@@ -18,7 +18,7 @@
 * golang本身具备一定的免杀性
 * 针对各功能实现了免杀，cs部分不免杀的功能得到了更换
 
-**在师傅们的帮助下测试了4.3、4.4、4.5、4.7版本，理论上来说4.1+版本均支持，如果有不支持的版本请及时通知我。**
+**4.1+版本均支持，如果有不支持的版本请及时通知我。**
 
 **如果有不免杀的地方请及时通知我。**
 
@@ -158,8 +158,6 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 由于要规避杀软对fork&&run的检测，暂时令反射型dll注入注入到自身进程中，暂时拿不到回显，请师傅们注意，如果师傅们对如何从CreateThread中拿回显有想法请联系我。
 
 目前由于对其他进程进行反射型dll注入有一些问题，目前无论将反射型dll注入到哪个进程都默认为注入到自身进程，请师傅们注意。
-
-若想再派生一个会话的话，不建议使用spawn，因为spawn派生的是原生cs的beacon，并且为了规避杀软对fork&&run的检测，目前spawn是注入了自身，建议直接用run或者execute执行geacon_pro.exe。
 
 ### linux和mac平台支持的功能：
 sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、自删除
