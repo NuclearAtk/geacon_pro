@@ -283,6 +283,7 @@ post-ex {
 
 config.go中有一些自定义的设置：
 
+* Proxy设置代理发包的功能，详情见实现细节。
 * Remark可以在上线的时候备注机子，方便区分不同应用场景。即如果Remark=“test”，上线机子的名称会被设置成为 ComputerName [test]。
 * ExecuteKey可以进行简单的反沙箱，若密钥值为password，设置后执行的时候需要geacon_pro.exe password才可执行成功，沙箱或蓝队成员由于不知道密钥，因此无法执行。
 * DeleteSelf设置是否自删除。
