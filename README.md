@@ -222,6 +222,7 @@ There are some custom settings in config.go:
 * Proxy sets the function of sending packets by proxy. You can find details in Implementation Details.
 * Remark can be used to remark the machine, which is convenient for distinguishing different application scenarios. That is, if Remark="test", the name of the online machine will be set as ComputerName [test].
 * ExecuteKey can perform simple anti-sandbox. If the key value is “password”, ```geacon_pro.exe password``` is required to execute after setting. The sandbox or blue team members cannot execute because they do not know the key.
+* ExecuteTime can perform simple anti-sandbox. If the current time is latter than the set time, the execution will fail. the set time is UTC time zone。
 * DeleteSelf sets whether to delete itself.
 * HideConsole sets whether to hide the console.
 * CommandReadTime sets the interval for asynchronous real-time echo when executes long duration commands.
