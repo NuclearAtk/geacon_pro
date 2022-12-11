@@ -17,10 +17,8 @@ func GetOSVersion() (string, error) {
 }
 
 func IsHighPriv() bool {
-	fd, err := os.Open("/root")
-	defer fd.Close()
-	if err != nil {
-		return false
+	if os.Getuid() == 0 {
+		return true
 	}
 	return false
 }
