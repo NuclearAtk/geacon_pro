@@ -524,9 +524,14 @@ func DeleteSelf() ([]byte, error) {
 	return Remove([]byte(filename))
 }
 
-func HideConsole() ([]byte, error) {
-	return []byte("this platform not supports HideConsole now."), nil
+func HideConsole() error {
+	return errors.New("this platform not supports HideConsole now.")
 }
+
 func GetPrivs(privs []string, stolenToken uintptr) ([]byte, error) {
 	return []byte("this platform not supports HideConsole now."), nil
+}
+
+func SetProcessDPIAware() error {
+	return errors.New("SetProcessDPIAware is not supported on this platform now.")
 }

