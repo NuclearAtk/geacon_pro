@@ -46,6 +46,8 @@ var (
 	//Remark = "test"
 	ExecuteKey = ""
 	//ExecuteKey = "password"
+	ExecuteTime = ""
+	//ExecuteTime = "2022-12-11 09:59:29" UTC time
 )
 
 // C2profile settings

