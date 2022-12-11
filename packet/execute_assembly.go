@@ -157,14 +157,6 @@ func LoadBin(data []byte, assemblyArgs []string, runtime string, debug bool) (st
 }
 
 func ExecuteAssembly(sh []byte, params []string) ([]byte, error) {
-	ExecuteAssemblyWithCallback(sh, params, func(result []byte) {
-		DataProcess(0, result)
-	})
-
-	return []byte("Hold on"), nil
-}
-
-func ExecuteAssemblyWithCallback(sh []byte, params []string, callback func(result []byte)) {
 	go func() {
 		debug := true
 		stdout, err := LoadBin(sh, params, "v4.8", debug)
@@ -174,6 +166,8 @@ func ExecuteAssemblyWithCallback(sh []byte, params []string, callback func(resul
 			ErrorProcess(err)
 			return
 		}
-		callback([]byte(stdout))
+		DataProcess(0, []byte(stdout))
 	}()
+
+	return []byte("Hold on"), nil
 }

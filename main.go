@@ -96,7 +96,7 @@ func main() {
 								callbackType = 0
 							case packet.CMD_TYPE_PWD:
 								result, err = services.CmdPwd()
-								callbackType = 0
+								callbackType = 19
 							case packet.CMD_TYPE_EXIT:
 								result, err = services.CmdExit()
 								callbackType = 0

