@@ -293,7 +293,12 @@ func Execute(b []byte, Token uintptr) ([]byte, error) {
 }
 
 func TimeStomp(from []byte, to []byte) ([]byte, error) {
-	return nil, errors.New("This function is not supported on this platform now.")
+	cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("touch -c -r %s %s", string(from), string(to)))
+	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("timestomp %s to %s", from, to)), nil
 }
 
 func GetUid() ([]byte, error) {
