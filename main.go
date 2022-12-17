@@ -77,7 +77,6 @@ func main() {
 						continue
 					}
 					if cmdBuf != nil {
-						//cmdBuf = []byte(strings.Trim(string(cmdBuf), "\x00"))
 						//fmt.Printf("cmdType: %d\n",cmdType)
 						//fmt.Printf("cmdBufferString: %s\n",cmdBuf)
 						//fmt.Printf("cmdBuffer: %v\n",cmdBuf)

