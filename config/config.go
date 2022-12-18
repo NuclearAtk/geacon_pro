@@ -10,16 +10,13 @@ var (
 	RsaPublicKey = []byte(`-----BEGIN PUBLIC KEY-----
 	Here should be your publickey
 -----END PUBLIC KEY-----`)
-	RsaPrivateKey = []byte(`-----BEGIN PRIVATE KEY-----
-	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	
------END PRIVATE KEY-----`)
 
 	C2        = "ip:port"
 	plainHTTP = "http://"
 	sslHTTP   = "https://"
 	GetUrl    = sslHTTP + C2 + Http_get_uri
 	PostUrl   = sslHTTP + C2 + Http_post_uri
-	//PostUrl   = sslHTTP + C2 + Http_post_uri + "?" + Http_post_id_header + "="
+
 	VerifySSLCert               = true
 	TimeOut       time.Duration = 10 //seconds
 
@@ -34,7 +31,8 @@ var (
 // personalized settings
 var (
 	ProxyOn = false
-	Proxy   = "http://192.168.52.10:8080"
+	Proxy   = ""
+	//Proxy = "http://192.168.52.10:8080"
 
 	CommandReadTime = 5000 * time.Millisecond
 	//non-blocking lasting jobs

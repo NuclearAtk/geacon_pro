@@ -4,6 +4,7 @@ package packet
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/Microsoft/go-winio"
@@ -323,7 +324,42 @@ func HandlerJob(b []byte) ([]byte, error) {
 
 	if result != "" {
 		if callbackType == CALLBACK_SCREENSHOT {
-			DataProcess(callbackType, []byte(result[4:]))
+			resultBytes := []byte(result[4:])
+			buff := bytes.NewBuffer(resultBytes)
+			_, err := util.ParseAnArgLittle(buff)
+			if err != nil {
+				return nil, err
+			}
+			offset := len(resultBytes) - buff.Len()
+			length := make([]byte, 4)
+			_, err = buff.Read(length)
+			if err != nil {
+				return nil, err
+			}
+
+			windowsName, err := util.ParseAnArgLittle(buff)
+			if err != nil {
+				return nil, err
+			}
+			userName, err := util.ParseAnArgLittle(buff)
+			if err != nil {
+				return nil, err
+			}
+			windowsName, err = CodepageToUTF8(windowsName)
+			if err != nil {
+				ErrorProcess(errors.New("result error"))
+			}
+
+			resultBytes = resultBytes[:offset+4]
+			bBytes := make([]byte, 4)
+			binary.LittleEndian.PutUint32(bBytes, uint32(len(windowsName)))
+			resultBytes = append(resultBytes, bBytes...)
+			resultBytes = append(resultBytes, windowsName...)
+			bBytes = make([]byte, 4)
+			binary.LittleEndian.PutUint32(bBytes, uint32(len(userName)))
+			resultBytes = append(resultBytes, bBytes...)
+			resultBytes = append(resultBytes, userName...)
+			DataProcess(callbackType, resultBytes)
 		} else {
 			DataProcess(callbackType, []byte(result))
 		}

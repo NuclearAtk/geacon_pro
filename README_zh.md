@@ -24,7 +24,7 @@
 
 **由于项目刚做出来，目前的版本存在部分功能不完善的地方，如有需求请师傅们提出。**
 
-目前实现的功能具备免杀性，可过Defender、360核晶（除powershell）、卡巴斯基（除内存操作外，如注入原生cs的dll）、火绒
+目前实现的功能具备免杀性，可过Defender、360核晶、卡巴斯基（除内存操作外，如注入原生cs的dll）、火绒
 
 上述测试环境均为实体机
 
@@ -43,6 +43,10 @@
 **如果有师傅对堆内存加密有好的解决思路欢迎来讨论，我的实现思路在实现细节里面**
 
 ## 更新的情况
+12.18更新：
+
+集成了powershell命令混淆免杀（VT全过），集成了免杀bypassuac，新增了linux/macos下的timestomp，修复了部分异步命令回显错误的BUG，修复了screenshot中文乱码的BUG，修复了windows平台下timestomp的BUG，增加了公钥错误的回显。
+
 12.11更新：
 
 新增了时间反沙箱的设置，优化了部分job的输出，修正了部分情况下分辨率导致的screenshot不完整的BUG，修正了部分情况下linux和mac权限获取错误的BUG。
@@ -157,14 +161,14 @@ func OnProcessAttach() {
 
 ## 实现功能
 ### windows平台支持的功能：
-sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
+sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、免杀powershell命令混淆、免杀bypassuac、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
 
 由于要规避杀软对fork&&run的检测，暂时令反射型dll注入注入到自身进程中，暂时拿不到回显，请师傅们注意，如果师傅们对如何从CreateThread中拿回显有想法请联系我。
 
 目前由于对其他进程进行反射型dll注入有一些问题，目前无论将反射型dll注入到哪个进程都默认为注入到自身进程，请师傅们注意。
 
 ### linux和mac平台支持的功能：
-sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、自删除
+sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、自删除、timestomp
 后续会添加linux与mac平台下后渗透功能
 
 进程管理部分、文件管理部分支持图形化交互
@@ -345,7 +349,10 @@ shell、run和execute的实现在没有窃取令牌的时候调用了CreateProce
 powershell-import部分的实现与cs的思路一样，先把输入的powershell module保存，之后在执行powershell命令的时候本地开一个端口并把module放上去，powershell直接请求该端口进行不落地的powershell module加载，不落地加载powershell module可以对部分杀软进行绕过。
 
 ### powershell
-powershell命令直接调用了powershell，会被360监控，可以尝试用免杀的方式执行。
+集成了powershell命令混淆免杀（AMSI绕过+ETW block+命令的混淆），VT全过，详情见我的[该项目](https://github.com/H4de5-7/powershell-obfuscation)。
+
+### bypassuac
+集成了免杀bypassuac。
 
 ### execute-assembly
 execute-assembly的实现与cs原生的实现不太一样，cs的beacon从服务端接收的内容的主体部分是c#的程序以及开.net环境的dll。cs的beacon首先拉起来一个进程（默认是rundll32），之后把用来开环境的dll注入到该进程中，然后将c#的程序注入到该进程并执行。考虑到步骤过于繁琐，并且容易拿不到执行的结果，我这里直接用[该项目](https://github.com/timwhitez/Doge-CLRLoad)实现了execute-assembly的功能，但未对全版本windows进行测试。

