@@ -279,12 +279,7 @@ func InjectSelf(sh []byte) ([]byte, error) {
 
 func HandlerJob(b []byte) ([]byte, error) {
 
-	buf := bytes.NewBuffer(b)
-	_, err := util.ParseAnArg(buf)
-	if err != nil {
-		return nil, err
-	}
-	//_ = util.ParseAnArg(buf)
+	buf := bytes.NewBuffer(b[4:])
 	callbackTypeByte := make([]byte, 2)
 	sleepTimeByte := make([]byte, 2)
 	_, _ = buf.Read(callbackTypeByte)
