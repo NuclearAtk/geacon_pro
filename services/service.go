@@ -465,3 +465,7 @@ func CmdService(Token uintptr) ([]byte, error) {
 
 	return []byte("Hold on"), nil
 }
+
+func CmdRunu(b []byte) ([]byte, error) {
+	return packet.Runu(b)
+}

