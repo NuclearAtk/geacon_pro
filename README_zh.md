@@ -19,9 +19,11 @@
 ## 三、实现功能
 本项目支持windows、linux、mac平台的使用。
 ### windows平台支持的功能：
-sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、免杀powershell命令混淆、免杀bypassuac、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
+sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell命令混淆、免杀bypassuac（uac-token-duplication）、免杀系统服务提权（svc-exe）、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、runu父进程欺骗、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
 
 目前由于对其他进程进行自定义反射型dll注入有一些问题，目前无论将自定义反射型dll注入到哪个进程都默认为注入到自身进程，请师傅们注意，有可能会拿不到回显。。
+
+目前powershell命令的混淆可过defender、卡巴等，过不了360，若想使用原生非混淆powershell请使用shell powershell。
 
 ### linux和mac平台支持的功能：
 sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、自删除、timestomp
@@ -52,6 +54,8 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 config.go中设置了大部分C2profile流量端设置与部分主机端设置。
 
 C2profile暂时不要设置post-ex中的obfuscation以及data_jitter。
+
+如果快速使用的话可以直接使用示例的c2profile（其实示例c2profile流量侧已经配置了不少东西了）不需要修改config.go。如果自己配置可以根据config.go中具体的字段名称来对应，比如说Http_post_id_crypt=[]string{"mask", "netbiosu"}对应着c2profile中的http-post中的id里面的mask;和netbiosu;。我们下个阶段主要的任务是简化配置的过程。
 
 **修改完C2profile后请不要忘记在config.go中对相应位置进行修改。下面给出示例C2profile，默认config.go适配该C2profile：**
 
@@ -233,15 +237,13 @@ config.go中有一些自定义的设置：
 
 ## 五、其他注意事项与免杀手段
 
-1、出于免杀性考量，暂时删除掉powershell-import代码，师傅们若想使用可以将commands_windows.go中的PowershellPort注释恢复。
+1、geacon_pro基于原生cs进行的开发，部分二开的版本可能会兼容错误，需要在geacon_pro中修改代码以适配二开的版本。
 
-2、geacon_pro基于原生cs进行的开发，部分二开的版本可能会兼容错误，需要在geacon_pro中修改代码以适配二开的版本。
+2、若想用免杀捆绑器的话可以参考我的这个[小项目](https://github.com/H4de5-7/Bundler-bypass)。
 
-3、若想用免杀捆绑器的话可以参考我的这个[小项目](https://github.com/H4de5-7/Bundler-bypass)。
+3、若想用免杀计划任务的话可以参考我的这个[小项目](https://github.com/H4de5-7/schtask-bypass)以及一个师傅的这个[项目](https://github.com/0x727/SchTask_0x727)（不过这个项目需要用execute-assembly来内存执行）。
 
-4、若想用免杀计划任务的话可以参考我的这个[小项目](https://github.com/H4de5-7/schtask-bypass)以及一个师傅的这个[项目](https://github.com/0x727/SchTask_0x727)（不过这个项目需要用execute-assembly来内存执行）。
-
-5、如果师傅们对堆内存加密或者dllinject注入自己拿回显有想法，欢迎来交流。
+4、如果师傅们对堆内存加密或者dllinject注入自己拿回显有想法，欢迎来交流。
 
 ## 六、开发的思路
 <details><summary>点击展开</summary>
@@ -292,8 +294,8 @@ powershell-import部分的实现与cs的思路一样，先把输入的powershell
 #### powershell
 集成了powershell命令混淆免杀（AMSI绕过+ETW block+命令的混淆），VT全过，详情见我的[该项目](https://github.com/H4de5-7/powershell-obfuscation)。
 
-#### bypassuac
-集成了免杀bypassuac，即execute-assembly执行COM绕过的exe。
+#### 提权
+集成了免杀bypassuac，即execute-assembly执行COM绕过的exe。集成了免杀系统服务提权，详情见 https://github.com/H4de5-7/elevate-bypass 。
 
 #### execute-assembly
 execute-assembly的实现与cs原生的实现不太一样，cs的beacon从服务端接收的内容的主体部分是c#的程序以及开.net环境的dll。cs的beacon首先拉起来一个进程（默认是rundll32），之后把用来开环境的dll注入到该进程中，然后将c#的程序注入到该进程并执行。考虑到步骤过于繁琐，并且容易拿不到执行的结果，我这里直接用[该项目](https://github.com/timwhitez/Doge-CLRLoad)实现了execute-assembly的功能，但未对全版本windows进行测试。
@@ -316,7 +318,7 @@ cs原生反射型dll注入的思路是先拉起来一个rundll32进程，之后�
 dll通过管道将结果异步地回传给服务端。目前的dll反射注入采用了注入自己的方法，后续会实现用户可通过配置文件进行注入方式的更改。
 
 #### 令牌
-令牌的部分目前实现了令牌的窃取、还原、制作、权限的获取。
+令牌的部分目前实现了令牌的窃取、还原、制作、权限的获取、父进程欺骗。
 
 #### 上线内网不出网主机
 考虑到渗透中常常存在着内网主机上线的情况，即边缘主机出网，内网主机不出网的情况。目前实现的木马暂不支持代理转发的功能，但是可以通过设置config.go中的proxy参数，通过边缘主机的代理进行木马的上线。即如果在边缘主机的8080端口开了个http代理，那么在config.go中设置ProxyOn为true，Proxy为`http://ip:8080`即可令内网的木马上线我们的C2服务器。
@@ -334,6 +336,13 @@ CobaltStrike貌似没有做自删除的功能，我们添加了不同平台下�
 
 ## 七、更新日志
 <details><summary>点击展开</summary>
+
+### v1.2 20230102
+1.集成了svc-exe系统服务的免杀system提权
+
+2.新增了runu父进程欺骗、恢复了powershell-import
+
+3.修复了特定情况下screenshot显示、sedebug函数错误、部分指令判断错误的BUG
 
 ### v1.1 20221218
 1.集成了powershell命令混淆免杀（AMSI绕过+ETW block+命令混淆），VT全过
