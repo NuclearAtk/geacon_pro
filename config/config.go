@@ -23,12 +23,11 @@ var (
 	VerifySSLCert               = true
 	TimeOut       time.Duration = 10 //seconds
 
-	IV                 = []byte("abcdefghijklmnop")
-	GlobalKey          []byte
-	AesKey             []byte
-	HmacKey            []byte
-	Counter            = 0
-	ComputerNameLength = 0
+	IV        = []byte("abcdefghijklmnop")
+	GlobalKey []byte
+	AesKey    []byte
+	HmacKey   []byte
+	Counter   = 0
 )
 
 // personalized settings

