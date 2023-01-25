@@ -169,7 +169,7 @@ post-ex {
 ```
 
 #### 4、编译成exe并执行
-windows有五种推荐的编译方式：
+windows有三种推荐的编译方式：
 
 注意已实现了内置去黑框功能，不需要"-H windowsgui"参数了，但是目前仍有一闪而过的黑框。
 
@@ -177,13 +177,9 @@ windows有五种推荐的编译方式：
 
 * go build -ldflags "-H windowsgui" 去除黑框（已内置代码）
 
-* go build -ldflags "-w" 缩小体积
-
-* go build -ldflags "-s" 缩小体积
-
 * go build -ldflags "-s -w" 缩小体积
 
-**360对部分编译参数有监控，可以尝试用winhex/记事本等将-ldflags "-s -w"等含有编译信息的字符替换成其他的字符串，或者用garble等项目混淆编译参数(seed=randon、-literals等），或者尝试用伪造签名等方法。**
+**360对部分编译参数如-s -w有监控，可以在linux或mac平台下交叉编译exe，经测试不会被360监控。推测360对符号表这些进行了监控，如果不存在则报，但不知道为啥交叉编译之后就可以。。**
 
 linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后台运行。
 
