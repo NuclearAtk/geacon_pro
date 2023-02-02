@@ -524,15 +524,16 @@ func Drives(b []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result []byte
-	i := 47
-	for bitMask > 0 {
-		if bitMask%2 == 1 {
-			result = append(result, byte(i))
-		}
-		bitMask >>= 1
-		i++
-	}
+	// var result []byte
+	// i := 47
+	// for bitMask > 0 {
+	// 	if bitMask%2 == 1 {
+	// 		result = append(result, byte(i))
+	// 	}
+	// 	bitMask >>= 1
+	// 	i++
+	// }
+	result := []byte(fmt.Sprintf("%d", bitMask))
 	return util.BytesCombine(b[0:4], result), nil
 }
 
