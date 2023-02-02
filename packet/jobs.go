@@ -428,6 +428,8 @@ func ReadNamedPipe(pipeName []byte, callbackType int, sleepTime uint16) (string,
 				if err != nil {
 					fmt.Printf("convertData2UTF8 error: %v\n", err)
 				}
+			} else {
+				send = resultBytes
 			}
 
 			DataProcess(callbackType, send)
