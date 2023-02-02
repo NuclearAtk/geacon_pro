@@ -8,11 +8,13 @@ require (
 	github.com/Ne0nd0g/go-clr v1.0.2
 	github.com/imroc/req v0.3.2
 	github.com/shirou/gopsutil v3.21.11+incompatible
+	github.com/timwhitez/Doge-Gabh v1.9.2
 	golang.org/x/sys v0.1.0
 	golang.org/x/text v0.4.0
 )
 
 require (
+	github.com/awgh/rawreader v0.0.0-20200626064944-56820a9c6da4 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.9 // indirect

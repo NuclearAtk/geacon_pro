@@ -31,14 +31,14 @@ func main() {
 	}
 
 	if config.HideConsole {
-		errConsole := packet.HideConsole()
-		if errConsole != nil {
+		errConsole := services.HideConsole()
+		if errConsole != nil && errConsole.Error() != "The operation completed successfully." {
 			fmt.Println(errConsole)
 		}
 	}
 
 	errDPI := services.ProcessDPIAware()
-	if errDPI != nil {
+	if errDPI != nil && errDPI.Error() != "The operation completed successfully." {
 		fmt.Println(errDPI)
 	}
 
@@ -47,6 +47,11 @@ func main() {
 		fmt.Println(errFirstBlood)
 		time.Sleep(3 * time.Second)
 		os.Exit(0)
+	}
+
+	errInit := services.Init()
+	if errInit != nil {
+		packet.ErrorProcess(errInit)
 	}
 
 	var Token uintptr
