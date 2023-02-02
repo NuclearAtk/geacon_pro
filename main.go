@@ -24,7 +24,7 @@ func main() {
 	}
 
 	if config.ExecuteTime != "" {
-		t, _ := time.Parse("2006-01-02 15:04:05", config.ExecuteTime)
+		t, _ := time.Parse("2021-01-01 12:00:05", config.ExecuteTime)
 		if time.Now().UTC().Unix() > t.Unix() {
 			os.Exit(0)
 		}

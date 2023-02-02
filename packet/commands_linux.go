@@ -545,3 +545,7 @@ func SetProcessDPIAware() error {
 func Runu(b []byte) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
+
+func FullUnhook() error {
+	return errors.New("Unhooking is not supported on this platform now.")
+}
