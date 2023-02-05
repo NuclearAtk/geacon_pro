@@ -357,14 +357,17 @@ The implementation of full unhooking under the windows platform. We first refer 
 
 ## 6.Functions need to be improved
 <details><summary>click here to find more details</summary>
+
 * ~~The bug in dllinject function.~~
 * Heap memory encryption is currently unstable and has not been officially used.
 * ~~Modify the problem of Chinese display error under some functions.~~
 * ~~Some functions do not support x86 system yet (I am too busy recently, and I will modify it as soon as possible).~~
+
 </details>
 
 ## 7.To do in the future
 <details><summary>click here to find more details</summary>
+
 * Implement more functions.
 * Integrate the pen test tools which can bypass Anti-Virus.
 * Implement more functions under Linux and Mac.
@@ -373,6 +376,7 @@ The implementation of full unhooking under the windows platform. We first refer 
 * Add flow obfuscation.
 * Obfuscate reflective dll in memory.
 * Simplify configuration and encrypt configuration file.
+
 </details>
 
 ## 8.404Starlink
