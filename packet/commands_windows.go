@@ -63,6 +63,10 @@ func Execute(b []byte, Token uintptr, argues map[string]string) ([]byte, error) 
 	isSpoof := false
 	commands := strings.Split(command, " ")
 	for index, c := range commands {
+		// don't replace program, but if there is a space in executable path, maybe will cause some bug?
+		if index == 0 {
+			continue
+		}
 		_, exist := argues[c]
 		if exist {
 			isSpoof = true
@@ -189,6 +193,10 @@ func Run(b []byte, Token uintptr, argues map[string]string) ([]byte, error) {
 	isSpoof := false
 	commands := strings.Split(command, " ")
 	for index, c := range commands {
+		// don't replace program, but if there is a space in executable path, maybe will cause some bug?
+		if index == 0 {
+			continue
+		}
 		_, exist := argues[c]
 		if exist {
 			isSpoof = true

