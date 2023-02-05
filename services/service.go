@@ -95,32 +95,31 @@ func CmdShell(cmdBuf []byte, Token uintptr, argues map[string]string) ([]byte, e
 func CmdUpload(cmdBuf []byte, isStart bool) ([]byte, error) {
 	filePath, fileData := ParseCommandUpload(cmdBuf)
 	filePathStr := strings.ReplaceAll(string(filePath), "\\", "/")
-	return Upload(filePathStr, fileData, isStart)
+	offset, err := Upload(filePathStr, fileData, isStart)
+	if err != nil {
+		return nil, err
+	}
+	return []byte("success, the offset is: " + strconv.Itoa(offset)), nil
 }
 
-func Upload(filePath string, fileContent []byte, isStart bool) ([]byte, error) {
+func Upload(filePath string, fileContent []byte, isStart bool) (int, error) {
 	var fp *os.File
 	var err error
 	if isStart {
 		// if file exist, need user delete it manually before upload
-		_, err = os.Stat(filePath)
-		if err != nil && os.IsNotExist(err) {
-			fp, err = os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
-		} else {
-			return nil, errors.New("file already exist")
-		}
+		fp, err = os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
 	} else {
 		fp, err = os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	}
 	if err != nil {
-		return nil, errors.New("file create err: " + err.Error())
+		return 0, errors.New("file create err: " + err.Error())
 	}
 	defer fp.Close()
 	offset, err := fp.Write(fileContent)
 	if err != nil {
-		return nil, errors.New("file write err: " + err.Error())
+		return 0, errors.New("file write err: " + err.Error())
 	}
-	return []byte("success, the offset is: " + strconv.Itoa(offset)), nil
+	return offset, nil
 }
 
 func CmdDownload(cmdBuf []byte) ([]byte, error) {
