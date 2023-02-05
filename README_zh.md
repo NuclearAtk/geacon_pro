@@ -21,7 +21,7 @@
 ## 三、实现功能
 本项目支持windows、linux、mac平台的使用。
 ### windows平台支持的功能：
-sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell命令混淆、powerpick、psinject、免杀bypassuac（uac-token-duplication）、免杀系统服务提权（svc-exe）、execute-assembly、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、runu父进程欺骗、argue欺骗、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
+sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell命令混淆、powerpick、psinject、免杀bypassuac（uac-token-duplication）、免杀系统服务提权（svc-exe）、execute-assembly、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、runu父进程欺骗、argue欺骗、代理发包、自删除、timestomp更改文件时间、unhook等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
 
 目前powershell命令的混淆可过defender、卡巴等，过不了360，若想使用原生非混淆powershell请使用shell powershell。
 
