@@ -756,7 +756,7 @@ func CmdArgueAdd(argues map[string]string, b []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	argue := strings.Split(string(argueBytes), " ")
+	argue := strings.SplitN(string(argueBytes), " ", 2)
 	_, exist := argues[argue[0]]
 	if exist && len(argue) == 2 {
 		return []byte(argue[0] + " has been declared."), nil
