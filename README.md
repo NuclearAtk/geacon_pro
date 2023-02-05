@@ -27,7 +27,7 @@ This project is developed by me and Z3ratu1. He has implemented a version of [ge
 ## 3.Functions
 ### Windows platform:
 
-sleep, shell, upload, download, exit, cd, pwd, file_browse, ps, kill, getuid, mkdir, rm, cp, mv, run, execute, drives, powershell-import, powershell, powershell-obfuscation, powerpick, psinject, bypassuac(bypass Anti-Virus), service elevation(bypass Anti-Virus), execute-assembly, Multiple thread injection methods (you can replace the source code yourself), spawn, inject, shinject, dllinject, pipe, Various CobaltStrike native reflection dll injection (mimikatz, portscan, screenshot, keylogger, etc.), steal_token, rev2self, make_token, getprivs, runu, argue spoofing, proxy, self-delete, timestomp, etc. Supports reflectiveDll, execute-assembly, powershell, powerpick, upload and execute and other functions of cna custom plugins.
+sleep, shell, upload, download, exit, cd, pwd, file_browse, ps, kill, getuid, mkdir, rm, cp, mv, run, execute, drives, powershell-import, powershell, powershell-obfuscation, powerpick, psinject, bypassuac(bypass Anti-Virus), service elevation(bypass Anti-Virus), execute-assembly, Multiple thread injection methods (you can replace the source code yourself), spawn, inject, shinject, dllinject, pipe, Various CobaltStrike native reflection dll injection (mimikatz, portscan, screenshot, keylogger, etc.), steal_token, rev2self, make_token, getprivs, runu, argue spoofing, proxy, self-delete, timestomp, unhook, etc. Supports reflectiveDll, execute-assembly, powershell, powerpick, upload and execute and other functions of cna custom plugins.
 
 ### Linux, Mac platform:
 
