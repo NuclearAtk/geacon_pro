@@ -348,7 +348,7 @@ CobaltStrike貌似没有做自删除的功能，我们添加了不同平台下�
 
 2.新增argue欺骗
 
-3.修复了drives部分情况下错误、keylogger中文会乱码、dllinject远程注入失败、自删除部分情况下失败的BUG
+3.修复了drives部分情况下错误、keylogger中文会乱码、dllinject远程注入失败、自删除部分情况下失败、upload时在原文件基础上append的BUG
 
 4.将os.Exit(0)修改为return，避免转换成反射型dll注入后退出宿主进程
 
