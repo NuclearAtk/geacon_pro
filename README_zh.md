@@ -3,9 +3,11 @@
 ## 一、简介
 本项目基于[geacon](https://github.com/darkr4y/geacon)项目对cobaltstrike的beacon进行了重构，并适配了大部分Beacon的功能，支持4.1+版本。
 
-目前实现的功能具备免杀性，可过Defender、360核晶、卡巴斯基（除内存操作外，如注入原生cs的dll）、火绒
+目前实现的功能具备免杀性，可过Defender、360核晶、卡巴斯基（除注入原生cs的dll、可注入无特征dll）、火绒
 
 上述测试环境均为实体机
+
+**为了预防杀软对本项目的部分特征进行监控，推荐师傅们使用garble对本项目进行混淆，使用注意事项请见下面的使用方法介绍。同时我们会实时跟踪杀软的动向并尽快更新，如果有杀软查杀了还望师傅们提issue说明。**
 
 **该项目会持续跟进免杀的技术，保持项目的免杀性，并将免杀的技术与工具集成进来，希望未来可以做成不仅限cs功能的跨平台后渗透免杀工具。如果师傅们有相关的需求或者想法，欢迎一起来讨论。师傅们的支持与讨论是我们前进的动力。**
 
@@ -19,9 +21,7 @@
 ## 三、实现功能
 本项目支持windows、linux、mac平台的使用。
 ### windows平台支持的功能：
-sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell命令混淆、免杀bypassuac（uac-token-duplication）、免杀系统服务提权（svc-exe）、execute-assembly（不落地执行c#）、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject（反射型dll注入）、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、runu父进程欺骗、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
-
-目前由于对其他进程进行自定义反射型dll注入有一些问题，目前无论将自定义反射型dll注入到哪个进程都默认为注入到自身进程，请师傅们注意，有可能会拿不到回显。。
+sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell命令混淆、powerpick、psinject、免杀bypassuac（uac-token-duplication）、免杀系统服务提权（svc-exe）、execute-assembly、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、runu父进程欺骗、argue欺骗、代理发包、自删除、timestomp更改文件时间等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
 
 目前powershell命令的混淆可过defender、卡巴等，过不了360，若想使用原生非混淆powershell请使用shell powershell。
 
@@ -255,6 +255,9 @@ config.go中有一些自定义的设置：
 * 针对各功能实现了免杀，cs部分不免杀的功能得到了更换
 
 ### 主体代码结构
+#### communication
+* http为发包的代码
+* packet为通信所需的部分功能
 #### config
 * 公钥、C2服务器地址、https通信、超时的时间、代理等设置
 * C2profile设置
@@ -263,12 +266,13 @@ config.go中有一些自定义的设置：
 * C2profile中加密算法的实现
 #### packet
 * commands为各个平台下部分功能的实现
+* commands_type为beacon的命令
+* evasion为规避杀软的代码
 * execute_assembly为windows平台下内存执行不落地c#的代码
 * heap为windows平台下堆内存加密代码
-* http为发包的代码
 * inject为windows平台下进程注入的代码
 * jobs为windows平台下注入cs原生反射型dll并管道回传的代码
-* packet为通信所需的部分功能
+* spoof为windows平台下欺骗相关的功能
 * token为windows平台下令牌相关的功能
 #### services
 对packet里面的功能进行了跨平台封装，方便main.go调用
@@ -299,9 +303,7 @@ powershell-import部分的实现与cs的思路一样，先把输入的powershell
 execute-assembly的实现与cs原生的实现不太一样，cs的beacon从服务端接收的内容的主体部分是c#的程序以及开.net环境的dll。cs的beacon首先拉起来一个进程（默认是rundll32），之后把用来开环境的dll注入到该进程中，然后将c#的程序注入到该进程并执行。考虑到步骤过于繁琐，并且容易拿不到执行的结果，我这里直接用[该项目](https://github.com/timwhitez/Doge-CLRLoad)实现了execute-assembly的功能，但未对全版本windows进行测试。
 
 #### 进程注入
-进程注入shinject和dllinject采用的是remote注入。
-
-**目前dllinject只支持注入自身的进程，shinject若注入到其他的进程的话要注意杀软对远程线程注入的检测。**
+进程注入shinject、dllinject、psinject采用的是remote注入。
 
 不过如果想执行自己的shellcode的话建议用shspawn，在当前实现中shspawn会注入geacon_pro本身，因此不会被杀软报远程线程注入。
 
@@ -316,7 +318,7 @@ cs原生反射型dll注入的思路是先拉起来一个rundll32进程，之后�
 dll通过管道将结果异步地回传给服务端。目前的dll反射注入采用了注入自己的方法，后续会实现用户可通过配置文件进行注入方式的更改。
 
 #### 令牌
-令牌的部分目前实现了令牌的窃取、还原、制作、权限的获取、父进程欺骗。
+令牌的部分目前实现了令牌的窃取、还原、制作、权限的获取。
 
 #### 上线内网不出网主机
 考虑到渗透中常常存在着内网主机上线的情况，即边缘主机出网，内网主机不出网的情况。目前实现的木马暂不支持代理转发的功能，但是可以通过设置config.go中的proxy参数，通过边缘主机的代理进行木马的上线。即如果在边缘主机的8080端口开了个http代理，那么在config.go中设置ProxyOn为true，Proxy为`http://ip:8080`即可令内网的木马上线我们的C2服务器。
@@ -330,10 +332,27 @@ dll通过管道将结果异步地回传给服务端。目前的dll反射注入�
 #### 自删除
 CobaltStrike貌似没有做自删除的功能，我们添加了不同平台下的自删除功能。windows平台下由于进程未退出的时候是无法自己删除自己的，常用的方法有bat与远程线程注入。 远程线程注入的缺点前面也提到了容易被杀软监控，因此我们这里简化了一下bat自删除，用CreateProcess新起了一个自删除进程并设置为空闲时间执行，自删除进程在geacon_pro进程执行完之后删除它。Linux平台下可以直接删除正在执行的进程的文件。
 
+#### 欺骗
+实现了父进程的欺骗、argue欺骗
+
+#### 规避
+实现了windows平台下的full unhook，这里原本参考了sliver的evasion实现，但是sliver里面没有用直接系统调用，可能会被杀软监控到，因此我们用timwhitez师傅的这个[项目](https://github.com/timwhitez/Doge-Gabh)实现了full unhook。
+
 </details>
 
 ## 七、更新日志
 <details><summary>点击展开</summary>
+
+### v1.3 20230205
+1.新增unhook(ntdll.dll,kernel32.dll,kernelbase.dll)
+
+2.新增argue欺骗
+
+3.修复了drives部分情况下错误、keylogger中文会乱码、dllinject远程注入失败、自删除部分情况下失败、upload时在原文件基础上append的BUG
+
+4.将os.Exit(0)修改为return，避免转换成反射型dll注入后退出宿主进程
+
+5.优化代码结构与sysinfo的显示
 
 ### v1.2 20230102
 1.集成了svc-exe系统服务的免杀system提权

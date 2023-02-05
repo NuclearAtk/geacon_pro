@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/Ne0nd0g/go-clr"
 	"log"
+	"main/communication"
 	"sync"
 	"time"
 )
@@ -80,7 +81,6 @@ func CleanCLR(debug bool) {
 			assemblies[i].methodInfo.Release()
 		}
 	}
-
 	if metaHost != nil {
 		if debug {
 			log.Printf("release metaHost\n")
@@ -162,11 +162,11 @@ func ExecuteAssembly(sh []byte, params []string) ([]byte, error) {
 		stdout, err := LoadBin(sh, params, "v4.8", debug)
 		if err != nil {
 			fmt.Printf("[DEBUG] Returned STDOUT/STDERR: \n%s\n", stdout)
-			ErrorProcess(errors.New(stdout))
-			ErrorProcess(err)
+			communication.ErrorProcess(errors.New(stdout))
+			communication.ErrorProcess(err)
 			return
 		}
-		DataProcess(0, []byte(stdout))
+		communication.DataProcess(0, []byte(stdout))
 	}()
 
 	return []byte("Hold on"), nil

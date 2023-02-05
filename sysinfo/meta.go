@@ -37,10 +37,6 @@ func GetProcessName() string {
 	if backslashPos > 0 {
 		result = processName[backslashPos+1:]
 	}
-	// stupid length limit
-	if len(result) > 10 {
-		result = result[len(result)-9:]
-	}
 	return result
 }
 
@@ -75,9 +71,6 @@ func GetComputerName() string {
 	}
 	if config.Remark != "" {
 		sHostName = sHostName + " [" + config.Remark + "]"
-	}
-	if len(sHostName) > config.ComputerNameLength {
-		return sHostName[:config.ComputerNameLength]
 	}
 	return sHostName
 }

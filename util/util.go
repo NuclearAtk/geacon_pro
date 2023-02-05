@@ -54,12 +54,3 @@ func ParseAnArgLittle(buf *bytes.Buffer) ([]byte, error) {
 	}
 
 }
-
-/*func ConvertChinese(byte []byte) []byte {
-	result, _ := simplifiedchinese.GBK.NewEncoder().Bytes(byte)
-	return result
-}*/
-
-func DebugError() {
-
-}

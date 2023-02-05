@@ -1,10 +1,13 @@
-package packet
+package communication
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
+	"io/ioutil"
 	"main/config"
 	"main/crypt"
 	"main/sysinfo"
@@ -13,6 +16,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 var (
@@ -116,18 +120,6 @@ func MakePacket(replyType int, b []byte) []byte {
 }
 
 func EncryptedMetaInfo() ([]byte, error) {
-	tempPacket := MakeMetaInfo()
-	//block, _ := pem.Decode(config.RsaPublicKey)
-	//if block == nil {
-	//	return nil, errors.New("public key error")
-	//}
-	//pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//pub := pubInterface.(*rsa.PublicKey)
-	// size is always 128
-	config.ComputerNameLength = 128 - len(tempPacket) - 11
 	packetUnencrypted := MakeMetaInfo()
 	packetEncrypted, err := crypt.RsaEncrypt(packetUnencrypted)
 	if err != nil {
@@ -214,6 +206,9 @@ func MakeMetaInfo() []byte {
 	binary.BigEndian.PutUint32(localIPBytes, uint32(localIP))
 
 	osInfo := fmt.Sprintf("%s\t%s\t%s", hostName, currentUser, processName)
+	if len(osInfo) > 58 {
+		osInfo = osInfo[:58]
+	}
 	osInfoBytes := []byte(osInfo)
 
 	fmt.Printf("clientID: %d\n", clientID)
@@ -306,14 +301,14 @@ func criticalSection(callbackType int, b []byte) ([]byte, error) {
 	return result, err
 }
 
-/*
-func processError(err string) {
-	errIdBytes := WriteInt(0) // must be zero
-	arg1Bytes := WriteInt(0)  // for debug
-	arg2Bytes := WriteInt(0)
-	errMsgBytes := []byte(err)
-	result := util.BytesCombine(errIdBytes, arg1Bytes, arg2Bytes, errMsgBytes)
-	finalPaket := MakePacket(31, result)
-	PushResult(finalPaket)
+func CodepageToUTF8(b []byte) ([]byte, error) {
+	if !utf8.Valid(b) {
+		reader := transform.NewReader(bytes.NewReader(b), simplifiedchinese.GBK.NewDecoder())
+		d, e := ioutil.ReadAll(reader)
+		if e != nil {
+			return nil, e
+		}
+		return d, nil
+	}
+	return b, nil
 }
-*/

