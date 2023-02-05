@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func Shell(path string, args []byte, Token uintptr) ([]byte, error) {
+func Shell(path string, args []byte, Token uintptr, argues map[string]string) ([]byte, error) {
 	path = "/bin/sh"
 	args = bytes.ReplaceAll(args, []byte("/C"), []byte("-c"))
 	args = bytes.Trim(args, " ")
@@ -57,7 +57,7 @@ func Shell(path string, args []byte, Token uintptr) ([]byte, error) {
 
 }
 
-func Execute(b []byte, Token uintptr) ([]byte, error) {
+func Execute(b []byte, Token uintptr, argues map[string]string) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 
@@ -70,7 +70,7 @@ func TimeStomp(from []byte, to []byte) ([]byte, error) {
 	return []byte(fmt.Sprintf("timestomp %s to %s", from, to)), nil
 }
 
-func Run(b []byte, Token uintptr) ([]byte, error) {
+func Run(b []byte, Token uintptr, argues map[string]string) ([]byte, error) {
 	return nil, errors.New("This function is not supported on this platform now.")
 }
 

