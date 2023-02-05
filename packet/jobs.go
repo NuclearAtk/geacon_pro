@@ -39,6 +39,7 @@ var (
 	SuspendThread       = kernel32.NewProc("SuspendThread")
 	PeekNamedPipe       = kernel32.NewProc("PeekNamedPipe")
 	GetFileTime         = kernel32.NewProc("GetFileTime")
+	SetThreadPriority   = kernel32.NewProc("SetThreadPriority")
 	//HeapLock = kernel32.NewProc("HeapLock")
 	//HeapUnlock = kernel32.NewProc("HeapUnlock")
 

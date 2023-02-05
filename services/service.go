@@ -593,11 +593,7 @@ func CmdExit() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		os.Exit(0)
 	}
-	os.Exit(0)
-	//ExitThread := sysinfo.Kernel32.NewProc("ExitThread")
-	//ExitThread.Call(0)
 	return []byte("success exit"), nil
 }
 

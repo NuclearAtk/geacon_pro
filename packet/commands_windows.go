@@ -399,6 +399,23 @@ func DeleteSelf() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	process, err := windows.GetCurrentProcess()
+	if err != nil {
+		return nil, err
+	}
+	thread, err := windows.GetCurrentThread()
+	if err != nil {
+		return nil, err
+	}
+	err = windows.SetPriorityClass(process, windows.REALTIME_PRIORITY_CLASS)
+	if err != nil {
+		return nil, err
+	}
+	THREAD_PRIORITY_TIME_CRITICAL := 15
+	_, _, err = SetThreadPriority.Call(uintptr(thread), uintptr(THREAD_PRIORITY_TIME_CRITICAL))
+	if err != nil && err.Error() != "The operation completed successfully." {
+		return nil, err
+	}
 	return []byte("success delete"), nil
 
 }
