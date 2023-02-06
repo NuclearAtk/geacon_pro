@@ -29,6 +29,8 @@ This project is developed by me and Z3ratu1. He has implemented a version of [ge
 
 sleep, shell, upload, download, exit, cd, pwd, file_browse, ps, kill, getuid, mkdir, rm, cp, mv, run, execute, drives, powershell-import, powershell, powershell-obfuscation, powerpick, psinject, bypassuac(bypass Anti-Virus), service elevation(bypass Anti-Virus), execute-assembly, Multiple thread injection methods (you can replace the source code yourself), spawn, inject, shinject, dllinject, pipe, Various CobaltStrike native reflection dll injection (mimikatz, portscan, screenshot, keylogger, etc.), steal_token, rev2self, make_token, getprivs, runu, argue spoofing, proxy, self-delete, timestomp, unhook, etc. Supports reflectiveDll, execute-assembly, powershell, powerpick, upload and execute and other functions of cna custom plugins.
 
+Unhook is not stable now. win8.1, winserver 2012 r2, some version of win7 can not run. You can use it by setting Unhook in config.go.
+
 ### Linux, Mac platform:
 
 sleep, shell, upload, download, exit, cd, pwd, file_browse, ps, kill, getuid, mkdir, rm, cp, mv, self-delete, timestomp, etc.
@@ -224,6 +226,7 @@ func OnProcessAttach() {
 There are some custom settings in config.go:
 
 * Proxy: Proxy sets the function of sending packets by proxy. You can find details in Implementation Details.
+* Unhook: Unhook can be used to bypass hooking of Anti-Virus, however, it is not stable now.
 * Remark: Remark can be used to remark the machine when it connects to server, which is convenient for distinguishing different scenes. That is, if Remark="test", the name of the online machine will be set as ComputerName [test].
 * ExecuteKey: ExecuteKey can perform simple anti-sandbox. If the value is "password", ```geacon_pro.exe password``` is required for execution after setting. The sandbox or blue team members cannot execute it because they do not know the key.
 * ExecuteTime: ExecuteTime can perform simple anti-sandbox. If the current time is later than the set time, the execution will fail. Pay attention, it is UTC time zone.
@@ -362,6 +365,7 @@ The implementation of full unhooking under the windows platform. We first refer 
 * Heap memory encryption is currently unstable and has not been officially used.
 * ~~Modify the problem of Chinese display error under some functions.~~
 * ~~Some functions do not support x86 system yet (I am too busy recently, and I will modify it as soon as possible).~~
+* Make unhook more stable in the future.
 
 </details>
 
