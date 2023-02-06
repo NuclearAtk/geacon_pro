@@ -677,7 +677,7 @@ func CmdService(Token uintptr, argues map[string]string) ([]byte, error) {
 	currentFile, _ := os.Executable()
 
 	go func() {
-		_, err := Upload(filePath, data, false)
+		_, err := Upload(filePath, data, true)
 		if err != nil {
 			communication.ErrorProcess(err)
 			return
