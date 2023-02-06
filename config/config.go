@@ -36,6 +36,7 @@ var (
 	CommandReadTime = 5000 * time.Millisecond
 	//non-blocking lasting jobs
 
+	Unhook = false
 	//Sleep_mask = true
 	DeleteSelf  = false
 	HideConsole = true
