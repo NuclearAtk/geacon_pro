@@ -50,10 +50,10 @@ func main() {
 		return
 	}
 
-	/*errInit := services.Init()
+	errInit := services.Init()
 	if errInit != nil {
 		communication.ErrorProcess(errInit)
-	}*/
+	}
 
 	var Token uintptr
 	var powershellImport []byte
