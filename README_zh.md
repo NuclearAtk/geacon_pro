@@ -47,6 +47,8 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 #### 1、修改公钥
 修改config.go中的公钥RsaPublicKey（此公钥是cs的公钥，不是https的公钥，提取方法可参考[geacon](https://github.com/darkr4y/geacon)介绍。
 
+请注意修改公钥的时候-----END PUBLIC KEY-----无缩进。
+
 #### 2、修改C2地址
 修改config.go中的C2地址（注意是listener地址，如果是http的listener的话需要将sslHTTP改为plainHTTP）。
 
@@ -339,7 +341,7 @@ CobaltStrike貌似没有做自删除的功能，我们添加了不同平台下�
 实现了父进程的欺骗、argue欺骗
 
 #### 规避
-实现了windows平台下的full unhook，这里原本参考了sliver的evasion实现，但是sliver里面没有用直接系统调用，可能会被杀软监控到，因此我们用timwhitez师傅的这个[项目](https://github.com/timwhitez/Doge-Gabh)实现了full unhook。
+实现了windows平台下的full unhook，这里原本参考了sliver的evasion实现，但是sliver里面没有用直接系统调用，可能会被杀软监控到，因此我们用timwhitez师傅的这个[项目](https://github.com/timwhitez/Doge-Gabh)实现了full unhook。但直接系统调用和sliver的实现都不是很稳定，后续会想想怎么兼容更多的版本。
 
 </details>
 
