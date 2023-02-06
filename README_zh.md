@@ -23,6 +23,8 @@
 ### windows平台支持的功能：
 sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、run、execute、drives、powershell-import、powershell命令混淆、powerpick、psinject、免杀bypassuac（uac-token-duplication）、免杀系统服务提权（svc-exe）、execute-assembly、多种线程注入的方法（可自己更换源码）、spawn、inject、shinject、dllinject、管道的传输、多种cs原生反射型dll注入（mimikatz、portscan、screenshot、keylogger等）、令牌的窃取与还原、令牌的制作、权限的获取、runu父进程欺骗、argue欺骗、代理发包、自删除、timestomp更改文件时间、unhook等功能。支持cna自定义插件的reflectiveDll、execute-assembly、powershell、powerpick、upload and execute等功能。
 
+Unhook目前实现不稳定，win8.1、winserver2012 r2和部分win7会出错，如果想使用师傅们可以在config.go中设置Unhook字段。
+
 目前powershell命令的混淆可过defender、卡巴等，过不了360，若想使用原生非混淆powershell请使用shell powershell。
 
 ### linux和mac平台支持的功能：
@@ -226,6 +228,7 @@ func OnProcessAttach() {
 config.go中有一些自定义的设置：
 
 * Proxy设置代理发包的功能，详情见实现细节。
+* Unhook设置是否进行初始的unhook。
 * Remark可以在上线的时候备注机子，方便区分不同应用场景。即如果Remark=“test”，上线机子的名称会被设置成为 ComputerName [test]。
 * ExecuteKey可以进行简单的反沙箱，若密钥值为password，设置后执行的时候需要geacon_pro.exe password才可执行成功，沙箱或蓝队成员由于不知道密钥，因此无法执行。
 * ExecuteTime可以进行简单的反沙箱，若当前时间晚于设置的时间则执行失败，师傅们注意该设置是UTC时区。
@@ -439,6 +442,7 @@ geacon_pro正式v1.0版本
 * 堆内存加密目前不稳定，暂未正式使用
 * ~~修改部分功能下中文乱码的问题~~
 * ~~部分功能暂未支持x86系统（最近太忙了，会尽快改出来）~~
+* unhook不稳定
 
 </details>
 
