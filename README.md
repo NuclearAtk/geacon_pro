@@ -354,7 +354,7 @@ The implementation of parent PID spoofing and argue spoofing.
 
 ### evasion
 
-The implementation of full unhooking under the windows platform. We first refer to the evasion implementation of sliver, but we found sliver not use direct system syscall, which may be monitored by Anti-Virus. Thus, we use this [project] (https://github.com/timwhitez/Doge-Gabh ) implements full unhook with direct system syscall.
+The implementation of full unhooking under the windows platform. We first refer to the evasion implementation of sliver, but we found sliver not use direct system syscall, which may be monitored by Anti-Virus. Thus, we use this [project] (https://github.com/timwhitez/Doge-Gabh ) implements full unhook with direct system syscall. However, the implementaion of ours and sliver's are both not stable now. And we will try to find method to make it stable in the future.
 
 </details>
 
