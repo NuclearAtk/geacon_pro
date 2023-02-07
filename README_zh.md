@@ -3,7 +3,7 @@
 ## 一、简介
 本项目基于[geacon](https://github.com/darkr4y/geacon)项目对cobaltstrike的beacon进行了重构，并适配了大部分Beacon的功能，支持4.1+版本。
 
-目前实现的功能具备免杀性，可过Defender、360核晶、卡巴斯基（除注入原生cs的dll、可注入无特征dll）、火绒
+目前实现的功能具备免杀性，可过Defender、360核晶、天擎、卡巴斯基（除注入原生cs的dll、可注入无特征dll）、火绒
 
 上述测试环境均为实体机
 
