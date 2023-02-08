@@ -189,6 +189,8 @@ windows有三种推荐的编译方式：
 
 linux和mac编译的时候添加-ldflags "-s -w"减小程序体积，然后后台运行。
 
+mac平台下低于10.14版本可能会因为golang的crypto包中未考虑低版本不存在的_SecTrustEvaluateWithError而闪退，后续我们会改进。
+
 ### 第二种使用方法：转成反射型dll/shellcode的形式以加载器方式来灵活加载
 
 前三步与第一种方法相同。
