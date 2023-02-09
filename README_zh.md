@@ -47,7 +47,7 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 #### 1、修改公钥
 修改config.go中的公钥RsaPublicKey（此公钥是cs的公钥，不是https的公钥，提取方法可参考[geacon](https://github.com/darkr4y/geacon)介绍。
 
-请注意修改公钥的时候-----END PUBLIC KEY-----无缩进。
+请注意修改公钥的时候-----END PUBLIC KEY-----那一行无缩进，总共应该是五行。
 
 #### 2、修改C2地址
 修改config.go中的C2地址（注意是listener地址，如果是http的listener的话需要将sslHTTP改为plainHTTP）。
