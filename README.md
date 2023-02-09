@@ -49,6 +49,8 @@ There are two ways to use, you can use it flexibly according to your preferences
 
 Modify the RsaPublicKey in config.go (it is the public key of CobaltStrike, not the public key of https, and the extraction method can refer to the introduction of [geacon](https://github.com/darkr4y/geacon).
 
+The line of "-----END PUBLIC KEY-----" should not have any indent.
+
 (2) Modify the address of C2
 
 Modify the C2 address in config.go (it is the listener address. If you want to connect beacon with a http listener, you need to change sslHTTP to plainHTTP).
