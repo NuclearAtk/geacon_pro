@@ -59,7 +59,7 @@ Domain fronting (optional): If you want to use domain fronting, you can change t
 
 (3) Adapt C2profile
 
-**Please do not set "set obfuscation" and "data_jitter" in post-ex of C2profile.**
+**Please do not set "set obfuscation" and "data_jitter" in post-ex of C2profile. Remember to add /r in config.go for multi-line append configuration。**
 
 If you want to use geacon_pro quickly, you can directly use the sample c2profile without modifying config.go.
 
