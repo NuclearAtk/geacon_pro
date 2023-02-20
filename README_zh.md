@@ -57,7 +57,7 @@ sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、
 #### 3、适配C2profile
 config.go中设置了大部分C2profile流量端设置与部分主机端设置。
 
-C2profile暂时不要设置post-ex中的obfuscation以及data_jitter。
+**C2profile暂时不要设置post-ex中的obfuscation以及data_jitter。多行append配置在config.go中记得加/r。**
 
 如果快速使用的话可以直接使用示例的c2profile（其实示例c2profile流量侧已经配置了不少东西了）不需要修改config.go。如果自己配置可以根据config.go中具体的字段名称来对应，比如说Http_post_id_crypt=[]string{"mask", "netbiosu"}对应着c2profile中的http-post中的id里面的mask;和netbiosu;。我们下个阶段主要的任务是简化配置的过程。
 
