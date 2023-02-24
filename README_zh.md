@@ -27,6 +27,8 @@ Unhook目前实现不稳定，win8.1、winserver2012 r2和部分win7会出错，
 
 目前powershell命令的混淆可过defender、卡巴等，过不了360，若想使用原生非混淆powershell请使用shell powershell。
 
+本项目旨在将功能免杀化，由于cs自带的psexec等命令需要落地因而无法免杀，集成新的免杀工具会增大不少体积，因此暂未集成，请师傅们手传wmihacker等免杀的横向移动工具。
+
 ### linux和mac平台支持的功能：
 sleep、shell、upload、download、exit、cd、pwd、file_browse、ps、kill、getuid、mkdir、rm、cp、mv、自删除、timestomp
 后续会添加linux与mac平台下后渗透功能
