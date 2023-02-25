@@ -464,6 +464,7 @@ geacon_pro正式v1.0版本
 * 增加混淆的流量
 * 混淆内存中的反射型dll
 * 简化配置并加密配置文件
+* BOF、DNS beacon、patch等
 
 </details>
 
