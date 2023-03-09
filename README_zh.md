@@ -198,7 +198,10 @@ mac平台下低于10.14版本可能会因为golang的crypto包中未考虑低版
 前三步与第一种方法相同。
 
 #### 编译为反射型dll/shellcode
-师傅们如果不想局限于使用geacon_pro生成的exe，可以使用[该项目](https://github.com/WBGlIl/go-ReflectiveDLL)将geacon_pro转换成反射型dll/shellcode的形式后使用加载器来加载，进而达成千人千面的免杀形式。师傅们若觉得转换后的体积较大，可以用下载器的方式来远程stager加载。将geacon_pro目录下文件移到该项目目录下之后，将main.go原本的main函数更名为OnPorcessAttach并标注导出函数export，之后添加import "C"并新增main()函数即可，最后用x64.bat编译（可以自定义编译的参数）并生成反射型dll。main.go示例如下：
+
+师傅们如果不想局限于使用geacon_pro生成的exe，可以使用[该项目](https://github.com/TheWover/donut)将geacon_pro转换成shellcode执行，进而达成千人千面的免杀形式。师傅们若觉得转换后的体积较大，可以用下载器的方式来远程stager加载。
+
+同时可以使用[该项目](https://github.com/WBGlIl/go-ReflectiveDLL)将geacon_pro转换成反射型dll的形式后使用加载器来加载。将geacon_pro目录下文件移到该项目目录下之后，将main.go原本的main函数更名为OnPorcessAttach并标注导出函数export，之后添加import "C"并新增main()函数即可，最后用x64.bat编译（可以自定义编译的参数）并生成反射型dll。main.go示例如下：
 
 ```
 package main
