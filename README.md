@@ -190,9 +190,9 @@ The first three steps are the same as the first method.
 
 (4) Compile to reflective dll/shellcode
 
-If you don’t want to use the exe generated, you can use this [project](https://github.com/WBGlIl/go-ReflectiveDLL) to convert geacon_pro into reflective dll/shellcode and use the loader to load. If you think that the converted volume is too large(about 6.3M), you can use the downloader(stager) to load the reflective dll remotely.
+If you don’t want to use the exe generated, you can use this [project](https://github.com/TheWover/donut) to convert geacon_pro into shellcode and use the loader to load. If you think that the converted volume is too large(about 6.3M), you can use the downloader(stager) to load the reflective dll remotely.
 
-After moving the files in the geacon_pro directory to this project directory, rename the original "main" function of main.go to "OnPorcessAttach" and mark the export function, then add 'import "C"' and add the main() function, and finally use x64.bat to compile (you can customize the compilation parameters) and generate reflective dll. The example of main.go is given below:
+you can also use this [project](https://github.com/WBGlIl/go-ReflectiveDLL) to convert geacon_pro into reflective dll and use the loader to load. After moving the files in the geacon_pro directory to this project directory, rename the original "main" function of main.go to "OnPorcessAttach" and mark the export function, then add 'import "C"' and add the main() function, and finally use x64.bat to compile (you can customize the compilation parameters) and generate reflective dll. The example of main.go is given below:
 
 ```
 package main
