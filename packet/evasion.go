@@ -1,4 +1,5 @@
-//go:build windows
+//go:build windows && !386
+// +build windows,!386
 
 package packet
 
